@@ -1,6 +1,5 @@
 "use client";
-import Image from "next/image";
-import { useState } from "react";
+import { LogoPositivo } from "@/app/components/Logo/LogoPositivo";
 import { BsDoorOpen } from "react-icons/bs";
 
 export default function Login() {
@@ -22,13 +21,7 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="flex flex-col gap-8 justify-center w-full max-w-md">
           <div className="flex gap-4 items-center">
-            <Image
-              src="/logo_horizontal_positivo.png"
-              height={100}
-              width={100}
-              alt="logo-img"
-              className="lg:hidden"
-            />
+            <LogoPositivo direction="horizontal"/>
             <h1 className="text-xl font-semibold hidden lg:block">MoviMenta</h1>
           </div>
           <div className="grid gap-2 border-b border-gray-400 pb-2">
@@ -39,7 +32,7 @@ export default function Login() {
           </div>
           <form className="items-center space-y-4" onSubmit={sendLogin}>
             <div className="grid gap-2">
-              <label htmlFor="email-input">E-mail</label>
+              <label htmlFor="email-input" className="font-bold">E-mail</label>
               <input
                 id="email-input"
                 name="email-input"
@@ -48,7 +41,7 @@ export default function Login() {
               />
             </div>
             <div className="grid gap-2">
-              <label htmlFor="pwd-input">Senha</label>
+              <label htmlFor="pwd-input" className="font-bold">Senha</label>
               <input
                 id="pwd-input"
                 name="pwd-input"

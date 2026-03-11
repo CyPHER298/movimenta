@@ -2,10 +2,20 @@
 
 :root {
   --bg-default: #e9e9e9;
+  --cinza: #787878;
   --azul: #1a3f7d;
-
 }
 
 body { 
   font-size: 16px;
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.fundo {
+  background-image: url("/public/inosuke.webp");
 }
