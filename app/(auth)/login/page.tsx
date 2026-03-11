@@ -4,11 +4,15 @@ import { useState } from "react";
 import { BsDoorOpen } from "react-icons/bs";
 
 export default function Login() {
-    const [email, setEmail] = useState<string>("")
-    const [password, setPassword] = useState<string>("")
+  const sendLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-    const sendLogin = () => {
-    }
+    const fd = new FormData(event.currentTarget);
+    const email = fd.get("email-input");
+    const password = fd.get("pwd-input");
+
+    const res = "ainda fazer o endpoint";
+  };
 
   return (
     <>
@@ -19,13 +23,13 @@ export default function Login() {
         <div className="flex flex-col gap-8 justify-center w-full max-w-md">
           <div className="flex gap-4 items-center">
             <Image
-              src="/next.svg"
+              src="/logo_horizontal_positivo.png"
               height={100}
               width={100}
               alt="logo-img"
               className="lg:hidden"
             />
-            <h1 className="text-xl font-semibold">MoviMenta</h1>
+            <h1 className="text-xl font-semibold hidden lg:block">MoviMenta</h1>
           </div>
           <div className="grid gap-2 border-b border-gray-400 pb-2">
             <h2 className="text-2xl font-bold">Bem-vindo de volta</h2>
@@ -38,20 +42,18 @@ export default function Login() {
               <label htmlFor="email-input">E-mail</label>
               <input
                 id="email-input"
+                name="email-input"
                 type="email"
                 className="border border-gray-300 rounded-lg p-2"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
               <label htmlFor="pwd-input">Senha</label>
               <input
                 id="pwd-input"
+                name="pwd-input"
                 type="password"
                 className="border border-gray-300 rounded-lg p-2 "
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
             <button
