@@ -16,7 +16,7 @@ export default function Login() {
 
   return (
     <>
-      <div className="bg-radial from-(--azul) via-(--bg-default) to-(--azul) hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden items-center justify-center p-12">
+      <div className="bg-radial from-(--azul) via-blue-200 to-(--azul) hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden items-center justify-center p-12">
         <div className="">
           <Image
             src="/logo_horizontal_negativo_branco.png"
@@ -26,9 +26,9 @@ export default function Login() {
           />
         </div>
       </div>
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 flex items-center justify-center p-8 bg-(--bg-default)">
         <div className="flex flex-col gap-8 justify-center w-full max-w-md">
-          <div className="flex gap-4 items-center">
+          <div className="flex gap-4 items-center lg:hidden">
             <LogoPositivo direction="horizontal" />
             <h1 className="text-2xl font-semibold hidden lg:block">MoviMenta</h1>
           </div>

@@ -7,9 +7,8 @@ interface LogoProps {
 export const LogoPositivo = ({ direction }: LogoProps) => (
   <Image
     src={`/logo_${direction}_positivo.png`}
-    height={180}
-    width={180}
+    height={100}
+    width={100}
     alt="logo-img"
-    className="lg:hidden"
   />
 );
