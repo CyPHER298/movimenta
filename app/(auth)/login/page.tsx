@@ -2,8 +2,20 @@
 import { LogoPositivo } from "@/app/components/Logo/LogoPositivo";
 import { BsDoorOpen } from "react-icons/bs";
 import Image from "next/image";
+import axios from "axios";
 
 export default function Login() {
+  const base_url = process.env.NEXT_PUBLIC_API_JAVA;
+
+  // const getPaymentOptions = async () => {
+  //   try {
+  //     const response = await axios(`${baseURL}/payment/options`);
+  //     setPaymentOptions(response.data);
+  //   } catch (error) {
+  //     console.error("Error fetching payment options:", error);
+  //   }
+  // };
+
   const sendLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -11,7 +23,8 @@ export default function Login() {
     const email = fd.get("email-input");
     const password = fd.get("pwd-input");
 
-    const res = "ainda fazer o endpoint";
+    const res = await axios.post(`${base_url}/login`, {email, password})
+    console.log(await res)
   };
 
   return (
