@@ -1,8 +1,8 @@
-function parseText(text: string | undefined) {
+export function parseText(text: string | undefined) {
   if (!text) return text;
 
-  if (text.length > 42) {
-    return text.substring(0, 42) + "...";
+  if (text.length > 16) {
+    return text.substring(0, 16) + "...";
   }
   return text;
 }

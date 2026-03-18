@@ -1,5 +1,6 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { parseText } from "@/app/utils/format"
 
 interface CompanyProps {
   name: string;
@@ -15,10 +16,10 @@ export const CompanyCard = ({ name, people, hi }: CompanyProps) => {
       rounded-xl hover:border-r-6 transition-all duration-100 cursor-pointer
       border-r-4 lg:border-0 active:border-r-8 lg:active:scale-95"
     >
-      <h2 className="text-2xl font-bold">{name}</h2>
-      <p className="ml-auto font-semibold">Beneficiários: {people}</p>
-      <p className="text-(--blue-icon) font-bold">{hi}</p>
+      <h2 className="text-xl font-bold">{parseText(name)}</h2>
       <ArrowRight className="ml-auto" />
+      <p className="text-(--blue-icon) font-bold">{hi}</p>
+      <p className="ml-auto font-semibold">Beneficiários: {people}</p>
     </Link>
   );
 };
