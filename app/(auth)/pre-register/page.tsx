@@ -6,7 +6,7 @@ import Image from "next/image";
 export default function PreRegister() {
   return (
     <>
-      <div className="bg-radial from-(--azul) via-(--bg-default) to-(--azul) hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden items-center justify-center p-12">
+      <div className="bg-radial from-(--azul) via-blue-400 to-(--azul) hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden items-center justify-center p-12">
         <div className="">
           <Image
             src="/logo_horizontal_negativo_branco.png"
