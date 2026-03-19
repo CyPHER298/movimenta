@@ -6,6 +6,7 @@ import { Clock, Files, Layers, Plus } from "lucide-react";
 import StatCard from "@/app/components/StatCard/StatCard";
 import { useEffect, useState } from "react";
 import { api } from "@/services/api";
+import { getAuthCookie } from "@/services/cookies";
 
 export default function Page() {
   const stats = [
@@ -15,6 +16,7 @@ export default function Page() {
     { label: "Concluídos", value: 0, icon: Files, color: "green-icon" },
   ];
   const [movements, setMovements] = useState<MovementTypes[]>([]);
+  const [toggleNewMovement, setToggleNewMovement] = useState<boolean>(false);
 
   useEffect(() => {
     async function getMoviments() {
@@ -50,7 +52,10 @@ export default function Page() {
       </div>
       <div className="flex justify-between items-center p-2 w-full">
         <h2 className="text-2xl font-semibold tracking-wide ">Movimentações</h2>
-        <button className="flex gap-2 bg-(--blue-button) p-2 text-white cursor-pointer rounded-lg hover:bg-(--azul) active:scale-95 transition duration-100">
+        <button
+          onClick={() => setToggleNewMovement(true)}
+          className="flex gap-2 bg-(--blue-button) p-2 text-white cursor-pointer rounded-lg hover:bg-(--azul) active:scale-95 transition duration-100"
+        >
           <Plus className="scale-70" />
           <p className="hidden lg:block">Nova Movimentação</p>
         </button>

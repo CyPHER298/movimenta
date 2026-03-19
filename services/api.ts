@@ -1,4 +1,5 @@
 import axios, { AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import { deleteAuthCookie, getAuthCookie } from "./cookies";
 
 export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_JAVA,
@@ -6,11 +7,12 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem("token");
+  async (config: InternalAxiosRequestConfig) => {
+    const token = await getAuthCookie("token");
+    console.log(token);
 
     if (token) {
-      config.headers.Authorization = token;
+      config.headers.Authorization = token.value;
     }
 
     return config;
@@ -29,7 +31,7 @@ api.interceptors.response.use(
     // Se o servidor retornar erro (ex: 401, 404, 500)
     if (error.response?.status === 401) {
       // Exemplo: Token expirado. Limpamos o lixo e mandamos pro login.
-      localStorage.removeItem("token");
+      deleteAuthCookie("token");
       window.location.href = "/login";
     }
 

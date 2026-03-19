@@ -10,3 +10,12 @@ export async function setAuthCookie(token: string) {
     path: "/",
   });
 }
+export async function getAuthCookie(name: string) {
+  const cookieStore = await cookies();
+  return cookieStore.get(name);
+}
+
+export async function deleteAuthCookie(name: string) {
+  const cookieStore = await cookies();
+  cookieStore.delete(name)
+}
