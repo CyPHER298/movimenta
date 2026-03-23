@@ -9,7 +9,6 @@ export const api = axios.create({
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const token = await getAuthCookie("token");
-    console.log(token);
 
     if (token) {
       config.headers.Authorization = token.value;

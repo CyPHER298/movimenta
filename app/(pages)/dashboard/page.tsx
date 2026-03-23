@@ -7,6 +7,7 @@ import StatCard from "@/app/components/StatCard/StatCard";
 import { useEffect, useState } from "react";
 import { api } from "@/services/api";
 import { getAuthCookie } from "@/services/cookies";
+import NewMovementCard from "@/app/components/NewMovementCard/NewMovementCard";
 
 export default function Page() {
   const stats = [
@@ -33,6 +34,7 @@ export default function Page() {
 
   return (
     <div className="space-y-6 p-8">
+      {toggleNewMovement && <NewMovementCard onClick={() => setToggleNewMovement(false)}/>}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold">Olá, (Cliente)</h1>
         <h2 className="opacity-60">
