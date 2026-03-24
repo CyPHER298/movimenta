@@ -14,7 +14,7 @@ export default function NewMovementCard({ onClick }: { onClick: () => void }) {
   const addBenef = () => {
     const newBenef: BeneficiaryTypes = {
       name: "",
-      birth: new Date(),
+      birth: "",
       cpf: "",
       cep: "",
       state: "",
@@ -24,6 +24,9 @@ export default function NewMovementCard({ onClick }: { onClick: () => void }) {
       number: "",
       complement: "",
       dependency: "titular",
+      docs: [],
+      titularName: "",
+      plan: "",
     };
 
     setBeneficiaries([...beneficiaries, newBenef]);
@@ -39,6 +42,15 @@ export default function NewMovementCard({ onClick }: { onClick: () => void }) {
     newBenef[index] = updatedData;
     setBeneficiaries(newBenef);
   };
+
+  const sendMovement = () => {
+    // Lógica para enviar a movimentação
+    alert("Movimentação enviada!");
+    setBeneficiaries([]);
+    setMovementSelect("Tipo de Movimentação");
+    setCompanySelect("Seleciona a empresa");
+    onClick();
+  }
 
   const options = [
     {
@@ -133,7 +145,7 @@ export default function NewMovementCard({ onClick }: { onClick: () => void }) {
           {beneficiaries.length > 0 && (
             <>
               {beneficiaries.map((benef, index) => (
-                <div className="space-y-4 bg-white/60 rounded-lg border border-gray-300 p-4 inset-shadow-sm/20">
+                <div key={index} className="space-y-4 bg-white/60 rounded-lg border border-gray-300 p-4 inset-shadow-sm/20">
                   <div className="font-bold flex justify-between">
                     <p>Beneficiário {index + 1}</p>
                     <button
@@ -145,7 +157,7 @@ export default function NewMovementCard({ onClick }: { onClick: () => void }) {
                     </button>
                   </div>
                   <Beneficiary
-                    key={benef.cpf}
+                    key={`beneficiary-field-${index}`}
                     data={benef}
                     onChange={(updatedData) => updateBenef(index, updatedData)}
                   />
@@ -153,6 +165,7 @@ export default function NewMovementCard({ onClick }: { onClick: () => void }) {
               ))}
               <div className="space-y-2 md:space-y-0 md:flex gap-2 justify-end">
                 <button
+                  onClick={sendMovement}
                   type="button"
                   className="bg-(--green-btn) border border-green-400 text-(--branco) text-lg px-2 rounded-md w-full md:w-32 hover:text-(--branco) transition-all duration-100 active:inset-shadow-green-900 active:inset-shadow-sm/60"
                 >

@@ -1,7 +1,7 @@
 
 export type BeneficiaryTypes = {
   name: string;
-  birth: Date;
+  birth: string;
   cpf: string;
   cep: string;
   state: string;
@@ -10,5 +10,8 @@ export type BeneficiaryTypes = {
   street: string;
   number: string;
   complement: string;
+  titularName: string;
+  docs: File[];
+  plan: string
   dependency: "titular" | "conjuge" | "filho" | "agregado";
 };
