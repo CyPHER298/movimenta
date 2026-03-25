@@ -1,8 +1,7 @@
-import { BeneficiaryTypes } from "./Beneficiary";
+import { BeneficiaryTypes } from "@/app/types/Beneficiary";
 
 export type MovementTypes = {
   id: string;
-  tipo: "inclusao" | "exclusao" | "alteracao" | "segunda-via";
   empresa: string;
   beneficiario: BeneficiaryTypes;
   data: string;

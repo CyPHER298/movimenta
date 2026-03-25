@@ -7,10 +7,16 @@ export function parseText(text: string | undefined) {
   return text;
 }
 
-export function formatCPF(cpf: string) {
-  const cleanedCPF = cpf.replace(/\D/g, ""); // Remove non-digit characters
-  if (cleanedCPF.length !== 11) {
-    return cpf; // Return original if not 11 digits
-  }
-  return cleanedCPF.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-}
+export const formatCPF = (value: string) => {
+  value = value.replace(/\D/g, ""); // Remove tudo que não é número
+  value = value.replace(/^(\d{3})(\d)/, "$1.$2");
+  value = value.replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3");
+  value = value.replace(/\.(\d{3})(\d)/, ".$1-$2");
+  return value.substring(0, 14); // Garante que não passe do limite
+};
+
+export const formatCEP = (value: string) => {
+  value = value.replace(/\D/g, "");
+  value = value.replace(/^(\d{5})(\d)/, "$1-$2");
+  return value.substring(0, 9);
+};

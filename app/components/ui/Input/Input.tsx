@@ -8,7 +8,7 @@ export const Input = ({
   id: string;
   type: string;
   placeholder?: string;
-  value?: string;
+  value?: string | number | readonly string[] | undefined;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) => {
   return (

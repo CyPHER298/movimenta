@@ -18,20 +18,26 @@ export default function NewMovementCard({ onClick, companies }: NewMovementProps
 
   const addBenef = () => {
     const newBenef: BeneficiaryTypes = {
-      name: "",
-      birth: "",
+      nome: "",
+      dataNascimento: "",
       cpf: "",
-      cep: "",
-      state: "",
-      city: "",
-      neighborhood: "",
-      street: "",
-      number: "",
-      complement: "",
-      dependency: "titular",
-      docs: [],
-      titularName: "",
-      plan: "",
+      endereco: {
+        logradouro: "",
+        numero: 0,
+        cep: "",
+        bairro: "",
+        cidade: "",
+        estado: "",
+        complemento: "",
+      },
+      dependencia: "TITULAR",
+      dadosComplementares: {
+        documentosBeneficiario: [],
+        documentoContratacao: "",
+      },
+      nomeTitular: "",
+      plano: "",
+      tipo: "INCLUSAO",
     };
 
     setBeneficiaries([...beneficiaries, newBenef]);

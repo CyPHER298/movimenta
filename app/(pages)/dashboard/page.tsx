@@ -6,9 +6,8 @@ import { Clock, Files, Layers, Plus } from "lucide-react";
 import StatCard from "@/app/components/StatCard/StatCard";
 import { useEffect, useState } from "react";
 import { api } from "@/services/api";
-import { getAuthCookie } from "@/services/cookies";
 import NewMovementCard from "@/app/components/NewMovementCard/NewMovementCard";
-import { CompanyTypes } from "@/app/types/CompanyTypes";
+import { verifyConnected } from "@/app/utils/verifyConnected";
 
 export default function Page() {
   const stats = [
@@ -19,37 +18,39 @@ export default function Page() {
   ];
   const [movements, setMovements] = useState<MovementTypes[]>([]);
   const [toggleNewMovement, setToggleNewMovement] = useState<boolean>(false);
-  const [companies, setCompanies] = useState<{ label: string, value: string}[]>([]);
+  const [companies, setCompanies] = useState<
+    { label: string; value: string }[]
+  >([]);
 
-  useEffect(() => {
-    async function getCompanies() {
-      try {
-        const res = await api.get("/empresas");
-        setCompanies(res.data.map((company: any) => ({
+  async function getCompanies() {
+    try {
+      const res = await api.get("/empresas");
+      setCompanies(
+        res.data.map((company: any) => ({
           label: company.nome,
           value: company.idEmpresa,
-        })));
-      } catch (err) {
-        console.error(err);
-      }
+        })),
+      );
+    } catch (err) {
+      console.error(err);
     }
-    getCompanies();
-  }, []);
+  }
+
+  async function getMoviments() {
+    try {
+      const res = await api.get("/movimentacao");
+      console.log(res);
+      setMovements(res.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   useEffect(() => {
-    async function getMoviments() {
-      try {
-        const res = await api.get("/movimentacao");
-        console.log(res);
-        setMovements(res.data || []);
-      } catch (err) {
-        console.error(err);
-      }
-    }
+    verifyConnected(window.location.href);
     getMoviments();
-  }, []);
-
-  
+    getCompanies();
+  }, [])
 
   return (
     <>
@@ -94,7 +95,6 @@ export default function Page() {
             <MovementCard
               key={i}
               id={movement.id}
-              tipo={movement.tipo}
               beneficiario={movement.beneficiario}
               data={movement.data}
               descricao={movement.descricao}
