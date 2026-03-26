@@ -2,8 +2,12 @@
 
 import { LogoPositivo } from "@/app/components/Logo/LogoPositivo";
 import Image from "next/image";
+import { useParams } from "next/navigation";
 
 export default function PreRegister() {
+  const param = useParams();
+  const idEmpresa = param.idEmpresa;
+
   return (
     <>
       <div className="bg-radial from-(--azul) via-blue-400 to-(--azul) hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden items-center justify-center p-12">

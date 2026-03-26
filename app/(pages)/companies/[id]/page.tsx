@@ -11,6 +11,7 @@ import { DadosGeraisType } from "@/app/types/DadosGeraisType";
 import { IconType } from "react-icons";
 import { GiHealthNormal } from "react-icons/gi";
 import { FaTooth } from "react-icons/fa";
+import Link from "next/link";
 
 export default function Page() {
   const params = useParams();
@@ -118,7 +119,17 @@ export default function Page() {
           />
         ))}
       </div>
-      <div></div>
+      <div className="p-2">
+        <p className="text-2xl font-semibold tracking-wide pb-2">Logins</p>
+        {company?.acessos.map((acesso: string) => (
+          <div>
+            <p>{acesso}</p>
+          </div>
+        ))}
+        <Link href={`/pre-register?idEmpresa=${idEmpresa}`}>
+          Adicionar novo acesso
+        </Link>
+      </div>
     </div>
   );
 }
