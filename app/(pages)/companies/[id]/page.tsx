@@ -8,6 +8,9 @@ import { useEffect, useState } from "react";
 import { Clock, Files, Layers, Plus } from "lucide-react";
 import StatCard from "@/app/components/StatCard/StatCard";
 import { DadosGeraisType } from "@/app/types/DadosGeraisType";
+import { IconType } from "react-icons";
+import { GiHealthNormal } from "react-icons/gi";
+import { FaTooth } from "react-icons/fa";
 
 export default function Page() {
   const params = useParams();
@@ -15,6 +18,11 @@ export default function Page() {
 
   const [company, setCompany] = useState<CompanyTypes>();
   const [dadosGerais, setDadosGerais] = useState<DadosGeraisType>();
+
+  interface modalideConfigProps {
+    value: IconType;
+    className: string;
+  }
 
   useEffect(() => {
     async function getDadosGerais() {
@@ -68,10 +76,35 @@ export default function Page() {
     },
   ];
 
+  const modalidadeIcon: Record<
+    CompanyTypes["modalidade"],
+    modalideConfigProps
+  > = {
+    SAUDE: {
+      value: GiHealthNormal,
+      className: "text-red-500",
+    },
+    DENTAL: {
+      value: FaTooth,
+      className: "text-blue-500",
+    },
+  };
+
+  let Icon: IconType = Files;
+  if (company != undefined) {
+    Icon = modalidadeIcon[company?.modalidade].value;
+  }
+
   return (
     <div className="space-y-6 p-8">
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">{company?.nome}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-3xl font-bold">{company?.nome}</h1>
+          {company && (
+            <Icon className={modalidadeIcon[company.modalidade].className} />
+          )}
+        </div>
+
         <p className="opacity-60">{parseCnpj(company?.cnpj)}</p>
       </div>
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -85,6 +118,7 @@ export default function Page() {
           />
         ))}
       </div>
+      <div></div>
     </div>
   );
 }
