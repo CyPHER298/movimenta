@@ -17,14 +17,10 @@ export default function Page() {
   async function getEquipes() {
     try {
       const res = await api.get("/equipes");
-<<<<<<< HEAD
-      setTeams(res.data);
-=======
       if (res.status === 200) {
         setTeams(res.data);
         console.log(res.data);
       }
->>>>>>> upstream
     } catch (err) {
       console.error(err);
     }
