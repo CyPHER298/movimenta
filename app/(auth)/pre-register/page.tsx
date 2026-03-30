@@ -22,6 +22,8 @@ export default function PreRegister() {
   >([]);
   const [companySelect, setCompanySelect] = useState("Seleciona a empresa");
   const [nomeEquipe, setNomeEquipe] = useState("");
+  const [responsabilidade, setResponsabilidade] = useState("");
+  const [nome, setNome] = useState("");
   const [teamStatus, setTeamStatus] = useState<TeamStatus>(
     isAnalistaFlow ? "loading" : "valid",
   );
@@ -72,6 +74,33 @@ export default function PreRegister() {
         await api.post("/auth/pre-register", {
           login: email,
           role: "ANALYST",
+          idEquipe,
+        });
+      } else {
+        await api.post("/auth/pre-register", {
+          login: email,
+          role: "USER",
+          idEmpresa: companySelect,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const sendPreRegisterAnalist = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    const fd = new FormData(event.currentTarget);
+    const email = fd.get("email-input");
+
+    try {
+      if (isAnalistaFlow) {
+        await api.post("/analista", {
+          login: email,
+          nome: nome,
+          responsabilidade: responsabilidade,
           idEquipe,
         });
       } else {
@@ -140,7 +169,9 @@ export default function PreRegister() {
               <>
                 <div className="grid gap-2 border-b border-gray-400 pb-2">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-2xl font-bold">Pre Cadastro Analista</h2>
+                    <h2 className="text-2xl font-bold">
+                      Pre Cadastro Analista
+                    </h2>
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-(--azul)">
                       <UserCog className="h-3 w-3" />
                       Analista
@@ -153,8 +184,22 @@ export default function PreRegister() {
 
                 <form
                   className="items-center space-y-4"
-                  onSubmit={sendPreRegister}
+                  onSubmit={sendPreRegisterAnalist}
                 >
+                  <div className="grid gap-2">
+                    <label htmlFor="nome-input" className="font-bold">
+                      Nome:
+                    </label>
+                    <input
+                      id="nome-input"
+                      name="nome-input"
+                      type="text"
+                      value={nome}
+                      onChange={(e) => setNome(e.target.value)}
+                      className="border border-gray-300 rounded-lg p-2 bg-white transition-all duration-100 shadow-md focus:scale-105 focus:border-(--azul)"
+                    />
+                  </div>
+
                   <div className="grid gap-2">
                     <label htmlFor="email-input" className="font-bold">
                       E-mail:
@@ -172,6 +217,27 @@ export default function PreRegister() {
                     <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-semibold text-(--azul)">
                       {nomeEquipe}
                     </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <label
+                      htmlFor="select-responsabilidade"
+                      className="font-bold"
+                    >
+                      Responsabilidade:
+                    </label>
+                    <CustomSelect
+                      id="select-responsabilidade"
+                      label="Selecione a responsabilidade"
+                      value={responsabilidade}
+                      onChange={setResponsabilidade}
+                      options={[
+                        { label: "Auxiliar", value: "AUXILIAR" },
+                        { label: "Junior", value: "JUNIOR" },
+                        { label: "Pleno", value: "PLENO" },
+                        { label: "Senior", value: "SENIOR" },
+                      ]}
+                    />
                   </div>
 
                   <button
