@@ -8,6 +8,7 @@ import { Building2, Files, Users } from "lucide-react";
 import StatCard from "@/app/components/StatCard/StatCard";
 import { parseCnpj } from "@/app/utils/format";
 import Link from "next/link";
+import { FaUserPlus } from "react-icons/fa";
 
 const responsabilidadeLabel: Record<string, string> = {
   AUXILIAR: "Auxiliar",
@@ -133,11 +134,21 @@ export default function Page() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <div className="rounded-2xl border border-gray-200 bg-white shadow-md p-4 sm:p-6 space-y-4">
-          <div>
-            <p className="text-2xl font-semibold tracking-wide">Analistas</p>
-            <p className="text-sm text-gray-500">
-              {dadosEquipe?.analistas?.length || 0} analista(s) nesta equipe
-            </p>
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-2xl font-semibold tracking-wide">Analistas</p>
+              <p className="text-sm text-gray-500">
+                {dadosEquipe?.analistas?.length || 0} analista(s) nesta equipe
+              </p>
+            </div>
+
+            <Link
+              href={`/pre-register?idEquipe=${idEquipe}`}
+              className="bg-(--azul) hover:bg-(--blue-icon) text-white rounded-lg py-2 px-3 flex items-center justify-center gap-2 cursor-pointer transition-all duration-100 active:scale-95 w-full sm:w-auto text-sm whitespace-nowrap"
+            >
+              Adicionar acesso
+              <FaUserPlus />
+            </Link>
           </div>
 
           {isLoading ? (
