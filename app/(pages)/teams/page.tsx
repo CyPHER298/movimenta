@@ -30,7 +30,7 @@ export default function Page() {
       {teams.length > 0 ? (
         <div className="grid grid-cols gap-8 w-full md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {teams.map((team, i) => (
-            <TeamCard key={i} id={team.id} nome={team.nome} analistas={team.analistas}/>
+            <TeamCard key={i} id={team.id} nome={team.nome} analistas={team.nomeAnalista}/>
           ))}
         </div>
       ) : (
