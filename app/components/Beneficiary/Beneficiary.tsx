@@ -5,18 +5,23 @@ import { Label } from "@/app/components/ui/Label/Label";
 import { CustomSelect } from "@/app/components/ui/Select/Select";
 import { BeneficiaryTypes } from "@/app/types/BeneficiaryTypes";
 import { formatCEP, formatCPF } from "@/app/utils/format";
+import { Paperclip, Upload } from "lucide-react";
 import { useState } from "react";
 
 interface BeneficiaryProps {
   data: BeneficiaryTypes;
   onChange: (updatedData: BeneficiaryTypes) => void;
+  onVinculoChange?: (file: File | null) => void;
+  onPessoaisChange?: (files: File[]) => void;
 }
 
-export default function Beneficiary({ data, onChange }: BeneficiaryProps) {
+export default function Beneficiary({ data, onChange, onVinculoChange, onPessoaisChange }: BeneficiaryProps) {
   const [dependencySelected, setDependencySelected] = useState(
     "Selecione a dependência",
   );
-  const [movementTypeSelected, setMovementTypeSelected] = useState("Seleciona a movimentação")
+  const [movementTypeSelected, setMovementTypeSelected] = useState("Seleciona a movimentação");
+  const [vinculoName, setVinculoName] = useState<string | null>(null);
+  const [pessoaisNames, setPessoaisNames] = useState<string[]>([]);
 
   const dependencies = [
     {

@@ -17,9 +17,12 @@ export default function NewMovementCard({
   onClick,
   companies,
 }: NewMovementProps) {
-  const [movementSelect, setMovementSelect] = useState("Tipo de Movimentação");
   const [companySelect, setCompanySelect] = useState("Seleciona a empresa");
   const [beneficiaries, setBeneficiaries] = useState<BeneficiaryTypes[]>([]);
+  const [beneficiaryFiles, setBeneficiaryFiles] = useState<
+    { vinculo: File | null; pessoais: File[] }[]
+  >([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const addBenef = () => {
     const newBenef: BeneficiaryTypes = {
@@ -28,7 +31,7 @@ export default function NewMovementCard({
       cpf: "",
       endereco: {
         logradouro: "",
-        numero: 0,
+        numero: "0",
         cep: "",
         bairro: "",
         cidade: "",
@@ -46,11 +49,12 @@ export default function NewMovementCard({
     };
 
     setBeneficiaries([...beneficiaries, newBenef]);
+    setBeneficiaryFiles([...beneficiaryFiles, { vinculo: null, pessoais: [] }]);
   };
 
   const deleteBenef = (index: number) => {
-    const updatedBeneficiaries = beneficiaries.filter((_, i) => i !== index);
-    setBeneficiaries(updatedBeneficiaries);
+    setBeneficiaries(beneficiaries.filter((_, i) => i !== index));
+    setBeneficiaryFiles(beneficiaryFiles.filter((_, i) => i !== index));
   };
 
   const updateBenef = (index: number, updatedData: BeneficiaryTypes) => {
@@ -59,16 +63,79 @@ export default function NewMovementCard({
     setBeneficiaries(newBenef);
   };
 
-  const handleMovement = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const fd = new FormData(event.currentTarget);
-    const idEmpresa = fd.get("name-company") as string;
-    const descritivo = fd.get("obs") as string;
-    SendMovement(beneficiaries, idEmpresa, descritivo);
+  const updateBenefFiles = (
+    index: number,
+    field: "vinculo" | "pessoais",
+    value: File | null | File[]
+  ) => {
+    const updated = [...beneficiaryFiles];
+    updated[index] = { ...updated[index], [field]: value };
+    setBeneficiaryFiles(updated);
   };
 
-  console.log("BENEFICIÁRIOS", beneficiaries);
+  const handleMovement = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const fd = new FormData(event.currentTarget);
+      const idEmpresa = companySelect;
+      const descritivo = fd.get("obs") as string;
+      const nomeEmpresa =
+        companies.find((c) => c.value === companySelect)?.label ?? companySelect;
+
+      // Passo 1: upload dos arquivos de cada beneficiário
+      const uploadedBeneficiaries = await Promise.all(
+        beneficiaries.map(async (benef, index) => {
+          const files = beneficiaryFiles[index] ?? { vinculo: null, pessoais: [] };
+          const allFiles: File[] = [...files.pessoais, ...(files.vinculo ? [files.vinculo] : [])];
+
+          if (allFiles.length === 0) {
+            return benef;
+          }
+
+          const uploadForm = new FormData();
+          allFiles.forEach((file) => uploadForm.append("files", file));
+
+          const params = new URLSearchParams({
+            tipoMovimentacao: benef.tipo,
+            nomeBeneficiario: benef.nome,
+            nomeEmpresa,
+          });
+
+          const uploadRes = await api.post<string[]>(
+            `/api/files/upload?${params.toString()}`,
+            uploadForm,
+            { headers: { "Content-Type": "multipart/form-data" } }
+          );
+
+          const raw = uploadRes.data;
+          const paths: string[] = Array.isArray(raw)
+            ? raw
+            : typeof raw === "string"
+            ? [raw]
+            : Object.values(raw as Record<string, string>);
+
+          const pessoaisCount = files.pessoais.length;
+          const documentosBeneficiario = paths.slice(0, pessoaisCount);
+          const documentoContratacao = paths[pessoaisCount] ?? "";
+
+          // Passo 2: injetar caminhos nos dadosComplementares
+          return {
+            ...benef,
+            dadosComplementares: { documentosBeneficiario, documentoContratacao },
+          };
+        })
+      );
+
+      // Passo 3: enviar movimentação com payload completo
+      await SendMovement(uploadedBeneficiaries, idEmpresa, descritivo);
+    } catch (err) {
+      console.error("Erro no envio da movimentação:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
 
@@ -84,9 +151,9 @@ export default function NewMovementCard({
         <form className="p-8 space-y-6" onSubmit={handleMovement}>
           <div className="grid gap-2 md:grid-cols-3 md:gap-8">
             <div className="grid gap-2">
-              <Label htmlFor="name-company">Empresa</Label>
+              <Label htmlFor="company">Empresa</Label>
               <CustomSelect
-                id="name-company"
+                id="company"
                 label={companySelect}
                 onChange={setCompanySelect}
                 options={companies}
@@ -143,15 +210,18 @@ export default function NewMovementCard({
                     key={`beneficiary-field-${index}`}
                     data={benef}
                     onChange={(updatedData) => updateBenef(index, updatedData)}
+                    onVinculoChange={(file) => updateBenefFiles(index, "vinculo", file)}
+                    onPessoaisChange={(files) => updateBenefFiles(index, "pessoais", files)}
                   />
                 </div>
               ))}
               <div className="space-y-2 md:space-y-0 md:flex gap-2 justify-end">
                 <button
                   type="submit"
-                  className="bg-(--green-btn) border border-green-400 text-(--branco) text-lg px-2 rounded-md w-full md:w-32 hover:text-(--branco) transition-all duration-100 active:inset-shadow-green-900 active:inset-shadow-sm/60"
+                  disabled={isLoading}
+                  className="bg-(--green-btn) border border-green-400 text-(--branco) text-lg px-2 rounded-md w-full md:w-32 hover:text-(--branco) transition-all duration-100 active:inset-shadow-green-900 active:inset-shadow-sm/60 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Enviar
+                  {isLoading ? "Enviando..." : "Enviar"}
                 </button>
                 <button
                   type="button"

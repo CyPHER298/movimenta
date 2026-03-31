@@ -1,6 +1,6 @@
 "use client";
 
-import { MovementCard } from "@/app/components/MovementCard/MovementCard";
+import { MovementCard } from "@/app/components/MovementCard/MovementChildCard";
 import { MovementTypes } from "@/app/types/MovementTypes";
 import { Clock, Files, Layers, Plus } from "lucide-react";
 import StatCard from "@/app/components/StatCard/StatCard";
@@ -40,6 +40,7 @@ export default function Page() {
     try {
       const res = await api.get("/movimentacao");
       setMovements(res.data || []);
+      console.log(res.data);
     } catch (err) {
       console.error(err);
     }
@@ -92,14 +93,15 @@ export default function Page() {
         </div>
         {movements.length > 0 ? (
           movements.map((movement, i) => (
-            <MovementCard
-              key={i}
-              id={movement.id}
-              beneficiario={movement.beneficiario}
-              data={movement.data}
-              descricao={movement.descricao}
-              status={movement.status}
-            />
+            <p>Oi</p>
+            // <MovementCard
+            //   key={i}
+            //   id={movement.idMovimentacao}
+            //   beneficiario={movement.beneficiariosMovimentacao}
+            //   data={movement.}
+            //   descricao={movement.}
+            //   status={movement.status}
+            // />
           ))
         ) : (
           <p className="text-center text-2xl italic opacity-60">

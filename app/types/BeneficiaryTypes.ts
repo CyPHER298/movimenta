@@ -16,7 +16,7 @@ export type BeneficiaryTypes = {
 
 type Endereco = {
   logradouro: string;
-  numero: number;
+  numero: string;
   cep: string;
   bairro: string;
   cidade: string;
