@@ -1,3 +1,16 @@
+export function parseDate(date: string | number[]): string {
+  if (Array.isArray(date)) {
+    const [year, month, day, hour, minute] = date;
+    return new Date(year, month - 1, day, hour, minute).toLocaleString("pt-BR", {
+      dateStyle: "short",
+      timeStyle: "short",
+    });
+  }
+  const parsed = new Date(date);
+  if (isNaN(parsed.getTime())) return String(date);
+  return parsed.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+}
+
 export function parseText(text: string) {
   if (text.length > 16) {
     return text.substring(0, 16) + "...";

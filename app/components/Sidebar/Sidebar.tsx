@@ -13,7 +13,7 @@ export const Sidebar = ({ onClose }: SidebarProps) => {
     { label: "Equipes", href: "/teams" },
   ];
   return (
-    <nav className="absolute top-0 right-0 bg-(--blue-icon) w-64 h-full shadow-lg p-6 flex flex-col justify-between">
+    <nav className="absolute top-0 right-0 z-50 bg-(--blue-icon) w-64 h-full shadow-lg p-6 flex flex-col justify-between">
       <div className="flex flex-col justify-between gap-8">
         <div className="flex justify-between items-center">
           <p className="font-bold text-2xl text-(--branco)">Menu</p>

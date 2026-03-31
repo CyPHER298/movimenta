@@ -1,13 +1,14 @@
 "use client";
 
-import { MovementCard } from "@/app/components/MovementCard/MovementChildCard";
+import { MovementChildrenCard } from "@/app/components/MovementCard/MovementChildCard";
 import { MovementTypes } from "@/app/types/MovementTypes";
-import { Clock, Files, Layers, Plus } from "lucide-react";
+import { Clock, Files, Layers, Plus, Search } from "lucide-react";
 import StatCard from "@/app/components/StatCard/StatCard";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "@/services/api";
 import NewMovementCard from "@/app/components/NewMovementCard/NewMovementCard";
 import { verifyConnected } from "@/app/utils/verifyConnected";
+import { MovementParentCard } from "@/app/components/MovementCard/MovementParentCard";
 
 export default function Page() {
   const stats = [
@@ -18,9 +19,21 @@ export default function Page() {
   ];
   const [movements, setMovements] = useState<MovementTypes[]>([]);
   const [toggleNewMovement, setToggleNewMovement] = useState<boolean>(false);
+  const [search, setSearch] = useState("");
   const [companies, setCompanies] = useState<
     { label: string; value: string }[]
   >([]);
+
+  const filteredMovements = useMemo(() => {
+    const q = search.toLowerCase();
+    return movements.filter(
+      (m) =>
+        m.nomeEmpresa.toLowerCase().includes(q) ||
+        m.beneficiariosMovimentacao.some((b) =>
+          b.nome.toLowerCase().includes(q),
+        ),
+    );
+  }, [movements, search]);
 
   async function getCompanies() {
     try {
@@ -50,8 +63,7 @@ export default function Page() {
     verifyConnected(window.location.href);
     getMoviments();
     getCompanies();
-  }, [])
-
+  }, []);
 
   return (
     <>
@@ -91,21 +103,33 @@ export default function Page() {
             <p className="hidden lg:block">Nova Movimentação</p>
           </button>
         </div>
-        {movements.length > 0 ? (
-          movements.map((movement, i) => (
-            <p>Oi</p>
-            // <MovementCard
-            //   key={i}
-            //   id={movement.idMovimentacao}
-            //   beneficiario={movement.beneficiariosMovimentacao}
-            //   data={movement.}
-            //   descricao={movement.}
-            //   status={movement.status}
-            // />
-          ))
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Buscar por empresa ou beneficiário..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm shadow-sm outline-none focus:border-(--blue-icon) focus:ring-2 focus:ring-(--blue-icon)/20 transition"
+          />
+        </div>
+        {filteredMovements.length > 0 ? (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredMovements.map((movement, i) => (
+              <MovementParentCard
+                key={i}
+                dataMovimentacao={movement.dataMovimentacao}
+                id={movement.idMovimentacao}
+                nomeEmpresa={movement.nomeEmpresa}
+                observacao={movement.observacao}
+                modalidade={movement.modalidade}
+                beneficiarios={movement.beneficiariosMovimentacao}
+              />
+            ))}
+          </div>
         ) : (
           <p className="text-center text-2xl italic opacity-60">
-            Não há movimentações realizadas
+            {search ? "Nenhuma movimentação encontrada" : "Não há movimentações realizadas"}
           </p>
         )}
       </div>
