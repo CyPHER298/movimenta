@@ -14,6 +14,7 @@ export default async function SendMovement(
       observacao: observation,
       beneficiarios: payload,
     });
+    console.log(res.data)
     return res.data;
   } catch (err) {
     console.error("ERRO AO ENVIAR A MOVIMENTAÇÃO", err);

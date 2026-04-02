@@ -19,7 +19,7 @@ export default function Beneficiary({ data, onChange, onVinculoChange, onPessoai
   const [dependencySelected, setDependencySelected] = useState(
     "Selecione a dependência",
   );
-  const [movementTypeSelected, setMovementTypeSelected] = useState("Seleciona a movimentação");
+  const [ movementTypeSelected, setMovementTypeSelected] = useState("Seleciona a movimentação");
   const [vinculoName, setVinculoName] = useState<string | null>(null);
   const [pessoaisNames, setPessoaisNames] = useState<string[]>([]);
 
@@ -82,7 +82,7 @@ export default function Beneficiary({ data, onChange, onVinculoChange, onPessoai
       </div>
       <div className="space-y-2 md:col-span-2">
         <Label htmlFor="move-type">Tipo de Movimentação</Label>
-        <CustomSelect id="move-type" label={movementTypeSelected} onChange={(e) => {handleChange("tipo", e); setMovementTypeSelected(e)}} options={movements} value={movementTypeSelected}/>
+        <CustomSelect id="move-type" label={movementTypeSelected} onChange={(e) => {handleChange("tipoMovimentacao", e); setMovementTypeSelected(e)}} options={movements} value={movementTypeSelected}/>
       </div>
       <div className="space-y-2">
         <Label htmlFor="dt-nasc">Data de Nascimento</Label>
@@ -199,21 +199,71 @@ export default function Beneficiary({ data, onChange, onVinculoChange, onPessoai
       <div className="space-y-2">
         <Label htmlFor="plan">Plano</Label>
         <Input
-          value={data.plano}
-          onChange={(e) => handleChange("plano", e.target.value)}
+          value={data.planoAtual}
+          onChange={(e) => handleChange("planoAtual", e.target.value)}
           placeholder="Ex: SMART 600 QP"
           type="string"
           id="plan"
         />
       </div>
-      <div>
-        <Label htmlFor="files">Documentos</Label>
+      <div className="space-y-2 col-span-2">
+        <Label htmlFor={`obs-benef-${data.cpf}`}>Observação</Label>
         <Input
-          onChange={(e) =>
-            handleChange("dadosComplementares", e.target.files?.[0]?.name || "")
-          }
-          id="files"
+          value={data.observacao}
+          onChange={(e) => handleChange("observacao", e.target.value)}
+          placeholder="Alguma observação sobre o beneficiário..."
+          type="text"
+          id={`obs-benef-${data.cpf}`}
+        />
+      </div>
+      {/* Documento Pessoal */}
+      <div className="space-y-2">
+        <Label htmlFor={`pessoais-${data.cpf}`}>Documento Pessoal</Label>
+        <label
+          htmlFor={`pessoais-${data.cpf}`}
+          className="flex items-center gap-2 w-full border border-gray-200 shadow-sm rounded-xl px-4 py-2 bg-white hover:bg-gray-50 cursor-pointer transition-all text-sm text-gray-500 truncate"
+        >
+          <Paperclip className="h-4 w-4 shrink-0 text-gray-400" />
+          <span className="truncate">
+            {pessoaisNames.length > 0
+              ? pessoaisNames.join(", ")
+              : "Selecionar arquivo(s)..."}
+          </span>
+        </label>
+        <input
+          id={`pessoais-${data.cpf}`}
           type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            const files = Array.from(e.target.files ?? []);
+            setPessoaisNames(files.map((f) => f.name));
+            onPessoaisChange?.(files);
+          }}
+        />
+      </div>
+
+      {/* Vínculo Empregatício */}
+      <div className="space-y-2">
+        <Label htmlFor={`vinculo-${data.cpf}`}>Vínculo Empregatício</Label>
+        <label
+          htmlFor={`vinculo-${data.cpf}`}
+          className="flex items-center gap-2 w-full border border-gray-200 shadow-sm rounded-xl px-4 py-2 bg-white hover:bg-gray-50 cursor-pointer transition-all text-sm text-gray-500 truncate"
+        >
+          <Upload className="h-4 w-4 shrink-0 text-gray-400" />
+          <span className="truncate">
+            {vinculoName ?? "Selecionar arquivo..."}
+          </span>
+        </label>
+        <input
+          id={`vinculo-${data.cpf}`}
+          type="file"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0] ?? null;
+            setVinculoName(file?.name ?? null);
+            onVinculoChange?.(file);
+          }}
         />
       </div>
     </div>

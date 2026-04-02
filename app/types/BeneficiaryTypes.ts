@@ -5,13 +5,15 @@ export type BeneficiaryTypes = {
   endereco: Endereco;
   nomeTitular: string;
   dadosComplementares: Documentos;
-  plano: string;
+  planoAtual: string;
   dependencia: "TITULAR" | "CONJUGE" | "FILHO" | "AGREGADO";
-  tipo:
+  tipoMovimentacao:
     | "INCLUSAO"
     | "EXCLUSAO"
     | "ALTERACAO_DE_DADOS_CADASTRAIS"
     | "SEGUNDA_VIA_CARTEIRINHA";
+  status: "PENDENTE" | "EM_ANALISE" | "CONCLUIDO";
+  observacao: string
 };
 
 type Endereco = {

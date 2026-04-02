@@ -7,6 +7,7 @@ import { Label } from "../ui/Label/Label";
 import { BeneficiaryTypes } from "@/app/types/BeneficiaryTypes";
 import { api } from "@/services/api";
 import SendMovement from "@/services/sendMovement";
+import { onlyDigits } from "@/app/utils/format";
 
 interface NewMovementProps {
   companies: { label: string; value: string }[];
@@ -45,8 +46,10 @@ export default function NewMovementCard({
         documentoContratacao: "",
       },
       nomeTitular: "",
-      plano: "",
-      tipo: "INCLUSAO",
+      planoAtual: "",
+      observacao: "",
+      tipoMovimentacao: "INCLUSAO",
+      status: "PENDENTE",
     };
 
     setBeneficiaries([...beneficiaries, newBenef]);
@@ -99,39 +102,41 @@ export default function NewMovementCard({
           ];
 
           if (allFiles.length === 0) {
-            return benef;
+            return {
+              ...benef,
+              dadosComplementares: {
+                "@type": benef.tipoMovimentacao,
+                ...benef.dadosComplementares,
+              },
+            };
           }
 
           const uploadForm = new FormData();
           allFiles.forEach((file) => uploadForm.append("files", file));
 
           const params = new URLSearchParams({
-            tipoMovimentacao: benef.tipo,
+            tipoMovimentacao: benef.tipoMovimentacao,
             nomeBeneficiario: benef.nome,
             nomeEmpresa,
           });
 
-          const uploadRes = await api.post<string[]>(
+          const uploadRes = await api.post(
             `/api/files/upload?${params.toString()}`,
             uploadForm,
             { headers: { "Content-Type": "multipart/form-data" } },
           );
+          console.log("Upload response:", uploadRes.data);
 
-          const raw = uploadRes.data;
-          const paths: string[] = Array.isArray(raw)
-            ? raw
-            : typeof raw === "string"
-              ? [raw]
-              : Object.values(raw as Record<string, string>);
-
+          const { paths: filePaths } = uploadRes.data as { message: string; paths: string[] };
           const pessoaisCount = files.pessoais.length;
-          const documentosBeneficiario = paths.slice(0, pessoaisCount);
-          const documentoContratacao = paths[pessoaisCount] ?? "";
+          const documentosBeneficiario = filePaths.slice(0, pessoaisCount);
+          const documentoContratacao = filePaths[pessoaisCount] ?? "";
 
           // Passo 2: injetar caminhos nos dadosComplementares
           return {
             ...benef,
             dadosComplementares: {
+              "@type": benef.tipoMovimentacao,
               documentosBeneficiario,
               documentoContratacao,
             },
@@ -139,8 +144,14 @@ export default function NewMovementCard({
         }),
       );
 
-      // Passo 3: enviar movimentação com payload completo
-      await SendMovement(uploadedBeneficiaries, idEmpresa, descritivo);
+      // Passo 3: sanitizar CPF e CEP antes de enviar
+      const sanitized = uploadedBeneficiaries.map((b) => ({
+        ...b,
+        cpf: onlyDigits(b.cpf),
+        endereco: { ...b.endereco, cep: onlyDigits(b.endereco.cep) },
+      }));
+
+      await SendMovement(sanitized, idEmpresa, descritivo);
     } catch (err) {
       console.error("Erro no envio da movimentação:", err);
     } finally {
@@ -184,8 +195,8 @@ export default function NewMovementCard({
                 label={modalitySelect}
                 onChange={setModalitySelect}
                 options={[
-                  { label: "Enfermaria", value: "ENFERMARIA" },
-                  { label: "Apartamento", value: "APARTAMENTO" },
+                  { label: "Saúde", value: "SAUDE" },
+                  { label: "Dental", value: "DENTAL" },
                 ]}
                 value={modalitySelect}
               />

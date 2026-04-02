@@ -40,6 +40,8 @@ export function parseCnpj(cnpj: string) {
     "$1.$2.$3/$4-$5",
   );
 }
+export const onlyDigits = (value: string) => value.replace(/\D/g, "");
+
 export const formatCPF = (value: string) => {
   value = value.replace(/\D/g, ""); // Remove tudo que não é número
   value = value.replace(/^(\d{3})(\d)/, "$1.$2");
