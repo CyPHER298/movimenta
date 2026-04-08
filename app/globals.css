@@ -18,6 +18,9 @@
   --green-hover: #40a32d;
   --red-hover: #a32d40;
   --red-btn: #c4324a;
+  --indigo-icon: #0036d7;
+  --yellow-icon: #ab5f00;
+  --red-icon: #c40004;
 }
 
 body {
@@ -43,6 +46,15 @@ select {
 }
 .gray-icon {
   color: var(--gray-icon);
+}
+.indigo-icon {
+  color: var(--indigo-icon);
+}
+.yellow-icon {
+  color: var(--yellow-icon);
+}
+.red-icon {
+  color: var(--red-icon);
 }
 
 @keyframes load {

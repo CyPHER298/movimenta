@@ -12,7 +12,7 @@ export type BeneficiaryTypes = {
     | "EXCLUSAO"
     | "ALTERACAO_DE_DADOS_CADASTRAIS"
     | "SEGUNDA_VIA_CARTEIRINHA";
-  status: "PENDENTE" | "ANALISE" | "CONCLUIDO";
+  status: "PENDENTE" | "ANALISE" | "ENVIADO_OPERADORA" | "PENDENTE_OPERADORA" | "DECLINIO" | "CONCLUIDO";
   observacao: string
 };
 

@@ -1,4 +1,4 @@
-import { File, Plus, Users, X } from "lucide-react";
+import { CheckCircle2, Plus, Users, X, AlertCircle } from "lucide-react";
 import { CustomSelect } from "@/app/components/ui/Select/Select";
 import { Input } from "@/app/components/ui/Input/Input";
 import { useState } from "react";
@@ -8,6 +8,7 @@ import { BeneficiaryTypes } from "@/app/types/BeneficiaryTypes";
 import { api } from "@/services/api";
 import SendMovement from "@/services/sendMovement";
 import { onlyDigits } from "@/app/utils/format";
+import { useRouter } from "next/navigation";
 
 interface NewMovementProps {
   companies: { label: string; value: string }[];
@@ -24,7 +25,10 @@ export default function NewMovementCard({
     { vinculo: File | null; pessoais: File[] }[]
   >([]);
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const router = useRouter();
+
   const addBenef = () => {
     const newBenef: BeneficiaryTypes = {
       nome: "",
@@ -76,8 +80,90 @@ export default function NewMovementCard({
     setBeneficiaryFiles(updated);
   };
 
+  const validateBeneficiaries = (): string | null => {
+    for (let i = 0; i < beneficiaries.length; i++) {
+      const b = beneficiaries[i];
+      const label = `Beneficiário ${i + 1}`;
+      const tipo = b.tipoMovimentacao;
+
+      const req = (field: string, value: string) => {
+        if (!value?.trim()) return `${label}: campo "${field}" é obrigatório.`;
+        return null;
+      };
+
+      // Campos comuns a todos os tipos
+      const nome = req("Nome", b.nome);
+      if (nome) return nome;
+
+      const cpf = req("CPF", b.cpf);
+      if (cpf) return cpf;
+
+      // SEGUNDA_VIA: apenas nome + CPF
+      if (tipo === "SEGUNDA_VIA_CARTEIRINHA") continue;
+
+      // EXCLUSAO: nome + CPF (arquivo é opcional no front)
+      if (tipo === "EXCLUSAO") continue;
+
+      // ALTERACAO_CADASTRAL: apenas nome + CPF obrigatórios
+      if (tipo === "ALTERACAO_DE_DADOS_CADASTRAIS") continue;
+
+      // INCLUSAO: formulário completo
+      const dtNasc = req("Data de Nascimento", b.dataNascimento);
+      if (dtNasc) return dtNasc;
+
+      const cep = req("CEP", b.endereco.cep);
+      if (cep) return cep;
+
+      const estado = req("Estado", b.endereco.estado);
+      if (estado) return estado;
+
+      const cidade = req("Cidade", b.endereco.cidade);
+      if (cidade) return cidade;
+
+      const bairro = req("Bairro", b.endereco.bairro);
+      if (bairro) return bairro;
+
+      const logradouro = req("Logradouro", b.endereco.logradouro);
+      if (logradouro) return logradouro;
+
+      const numero = req("Número", b.endereco.numero);
+      if (numero) return numero;
+
+      const plano = req("Plano", b.planoAtual);
+      if (plano) return plano;
+
+      // Nome do titular só obrigatório para dependentes
+      if (b.dependencia !== "TITULAR") {
+        const titular = req("Nome do Titular", b.nomeTitular);
+        if (titular) return titular;
+      }
+    }
+    return null;
+  };
+
   const handleMovement = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    // Validações síncronas antes de qualquer operação async
+    setError(null);
+
+    if (!companySelect || companySelect === "Seleciona a empresa") {
+      setError("Selecione uma empresa antes de enviar.");
+      document.getElementById("new-movement-scroll")?.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    if (beneficiaries.length === 0) {
+      setError("Adicione ao menos um beneficiário.");
+      document.getElementById("new-movement-scroll")?.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    const validationError = validateBeneficiaries();
+    if (validationError) {
+      setError(validationError);
+      document.getElementById("new-movement-scroll")?.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -124,14 +210,15 @@ export default function NewMovementCard({
             uploadForm,
             { headers: { "Content-Type": "multipart/form-data" } },
           );
-          console.log("Upload response:", uploadRes.data);
 
-          const { paths: filePaths } = uploadRes.data as { message: string; paths: string[] };
+          const { paths: filePaths } = uploadRes.data as {
+            message: string;
+            paths: string[];
+          };
           const pessoaisCount = files.pessoais.length;
           const documentosBeneficiario = filePaths.slice(0, pessoaisCount);
           const documentoContratacao = filePaths[pessoaisCount] ?? "";
 
-          // Passo 2: injetar caminhos nos dadosComplementares
           return {
             ...benef,
             dadosComplementares: {
@@ -143,7 +230,7 @@ export default function NewMovementCard({
         }),
       );
 
-      // Passo 3: sanitizar CPF e CEP antes de enviar
+      // Passo 2: sanitizar CPF e CEP
       const sanitized = uploadedBeneficiaries.map((b) => ({
         ...b,
         cpf: onlyDigits(b.cpf),
@@ -151,16 +238,23 @@ export default function NewMovementCard({
       }));
 
       await SendMovement(sanitized, idEmpresa, descritivo);
-    } catch (err) {
-      console.error("Erro no envio da movimentação:", err);
+
+      setSuccess(true);
+      setTimeout(() => router.push("/dashboard"), 1800);
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ??
+        err?.message ??
+        "Erro ao enviar a movimentação. Tente novamente.";
+      setError(msg);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-black/20 backdrop-blur-xs absolute items-center justify-center overflow-y-scroll h-screen lg:overflow-y-auto inset-0 z-50 p-4 md:p-16">
-      <div className="bg-(--bg-default) text-(--black) rounded-lg md:min-w-3/4">
+    <div id="new-movement-scroll" className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 backdrop-blur-xs overflow-y-auto md:p-16">
+      <div className="bg-(--bg-default) text-(--black) w-full rounded-lg border border-gray-300 shadow-lg">
         <div className="flex p-6 border-b border-black/20 justify-between items-center">
           <h2 className="font-bold text-2xl">Nova Movimentação</h2>
           <button type="button" onClick={onClick} className="cursor-pointer">
@@ -200,10 +294,26 @@ export default function NewMovementCard({
                 className="flex w-full md:w-auto gap-2 bg-white text-sm p-2 rounded border border-gray-200 shadow-md/20 hover:bg-(--branco) active:inset-shadow-sm/20 active:shadow-none cursor-pointer transition-all duration-50"
               >
                 <Plus />
-                <p>Adicionar Beneficiario</p>
+                <p>Beneficiario</p>
               </button>
             </div>
           </div>
+          {/* Banner de erro */}
+          {error && (
+            <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              {error}
+            </div>
+          )}
+
+          {/* Banner de sucesso */}
+          {success && (
+            <div className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+              <CheckCircle2 className="h-4 w-4 shrink-0" />
+              Movimentação enviada com sucesso! Redirecionando...
+            </div>
+          )}
+
           {beneficiaries.length > 0 && (
             <>
               {beneficiaries.map((benef, index) => (
@@ -237,14 +347,16 @@ export default function NewMovementCard({
               <div className="space-y-2 md:space-y-0 md:flex gap-2 justify-end">
                 <button
                   type="submit"
-                  disabled={isLoading}
-                  className="bg-(--green-btn) border border-green-400 text-(--branco) text-lg px-2 rounded-md w-full md:w-32 hover:text-(--branco) transition-all duration-100 active:inset-shadow-green-900 active:inset-shadow-sm/60 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading || success}
+                  className="bg-(--green-btn) border border-green-400 text-(--branco) text-lg px-4 py-2 rounded-md w-full md:w-36 hover:text-(--branco) transition-all duration-100 active:inset-shadow-green-900 active:inset-shadow-sm/60 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? "Enviando..." : "Enviar"}
                 </button>
                 <button
                   type="button"
-                  className="bg-(--red-btn) border border-red-200 text-(--branco) text-lg px-2 rounded-md w-full md:w-32 cursor-pointer hover:text-(--branco) active:inset-shadow-sm/60 active:inset-shadow-red-900  transition-all duration-100"
+                  onClick={onClick}
+                  disabled={isLoading}
+                  className="bg-(--red-btn) border border-red-200 text-(--branco) text-lg px-4 py-2 rounded-md w-full md:w-36 cursor-pointer hover:text-(--branco) active:inset-shadow-sm/60 active:inset-shadow-red-900 transition-all duration-100 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancelar
                 </button>

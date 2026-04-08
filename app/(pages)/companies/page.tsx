@@ -4,11 +4,12 @@ import { CompanyCard } from "@/app/components/CompanyCard/CompanyCard";
 import StatCard from "@/app/components/StatCard/StatCard";
 import { CompanyTypes } from "@/app/types/CompanyTypes";
 import { api } from "@/services/api";
-import { Building2, IdCard, ShieldCheck, Users } from "lucide-react";
+import { Building2, IdCard, Plus, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { parseCnpj } from "@/app/utils/format";
 import { CustomSelect } from "@/app/components/ui/Select/Select";
 import { Input } from "@/app/components/ui/Input/Input";
+import { AddCompanyModal } from "@/app/components/AddCompanyModal/AddCompanyModal";
 
 export default function Page() {
   const [companies, setCompanies] = useState<CompanyTypes[]>([]);
@@ -18,6 +19,7 @@ export default function Page() {
     "" | "SAUDE" | "DENTAL"
   >("");
   const [operadoraFilter, setOperadoraFilter] = useState<string>("");
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     async function getCompanies() {
@@ -110,12 +112,33 @@ export default function Page() {
 
   return (
     <div className="space-y-8 p-4 sm:p-6 lg:p-8">
-      <div className="space-y-2">
-        <h1 className="text-2xl sm:text-3xl font-bold">Empresas</h1>
-        <h2 className="opacity-60">
-          Consulte as empresas e acompanhe rapidamente os dados principais.
-        </h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl font-bold">Empresas</h1>
+          <h2 className="opacity-60">
+            Consulte as empresas e acompanhe rapidamente os dados principais.
+          </h2>
+        </div>
+        <button
+          type="button"
+          onClick={() => setShowAddModal(true)}
+          className="bg-(--azul) hover:bg-(--blue-icon) text-white rounded-lg py-2 px-4 flex items-center gap-2 cursor-pointer transition-all duration-100 active:scale-95 text-sm whitespace-nowrap self-start"
+        >
+          <Plus size={16} />
+          Adicionar empresa
+        </button>
       </div>
+
+      {showAddModal && (
+        <AddCompanyModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => {
+            setShowAddModal(false);
+            // Recarrega a lista
+            api.get("/empresas").then((res) => setCompanies(res.data));
+          }}
+        />
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {stats.map((stat, index) => (

@@ -5,9 +5,8 @@ import { Label } from "@/app/components/ui/Label/Label";
 import { CustomSelect } from "@/app/components/ui/Select/Select";
 import { BeneficiaryTypes } from "@/app/types/BeneficiaryTypes";
 import { formatCEP, formatCPF, onlyDigits } from "@/app/utils/format";
-import { Loader2, Paperclip, Search, Upload } from "lucide-react";
+import { Loader2, Paperclip, Upload } from "lucide-react";
 import { useState } from "react";
-import { api } from "@/services/api";
 import { AnimatePresence, motion } from "motion/react";
 
 interface BeneficiaryProps {
@@ -44,14 +43,11 @@ export default function Beneficiary({
   onChange,
   onVinculoChange,
   onPessoaisChange,
-  idEmpresa,
 }: BeneficiaryProps) {
   const [vinculoName, setVinculoName] = useState<string | null>(null);
   const [pessoaisNames, setPessoaisNames] = useState<string[]>([]);
-  const [cpfSearch, setCpfSearch] = useState("");
-  const [isFetching, setIsFetching] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-  const [hasFetched, setHasFetched] = useState(false);
+  const [isFetchingCep, setIsFetchingCep] = useState(false);
+  const [alterarEndereco, setAlterarEndereco] = useState(false);
 
   const tipo = data.tipoMovimentacao;
 
@@ -59,43 +55,34 @@ export default function Beneficiary({
     onChange({ ...data, [field]: value });
   };
 
-  const handleTipoChange = (value: string) => {
-    handleChange("tipoMovimentacao", value);
-    setHasFetched(false);
-    setFetchError(null);
-    setCpfSearch("");
-  };
-
-  const handleFetchByCpf = async () => {
-    const digits = onlyDigits(cpfSearch);
-    if (digits.length !== 11) {
-      setFetchError("CPF inválido.");
-      return;
-    }
-    setIsFetching(true);
-    setFetchError(null);
+  const handleCepChange = async (raw: string) => {
+    handleChange("endereco", { ...data.endereco, cep: raw });
+    const digits = onlyDigits(raw);
+    if (digits.length !== 8) return;
+    setIsFetchingCep(true);
     try {
-      const params = idEmpresa ? `?idEmpresa=${idEmpresa}` : "";
-      const res = await api.get(`/beneficiarios/cpf/${digits}${params}`);
-      const b = res.data;
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      const json = await res.json();
+      if (json.erro) return;
       onChange({
         ...data,
-        nome: b.nome ?? "",
-        dataNascimento: b.dataNascimento ?? "",
-        cpf: b.cpf ?? digits,
-        endereco: b.endereco ?? data.endereco,
-        dependencia: b.dependencia ?? data.dependencia,
-        nomeTitular: b.nomeTitular ?? "",
-        planoAtual: b.planoAtual ?? "",
-        observacao: b.observacao ?? "",
+        endereco: {
+          ...data.endereco,
+          cep: raw,
+          logradouro: json.logradouro ?? data.endereco.logradouro,
+          bairro: json.bairro ?? data.endereco.bairro,
+          cidade: json.localidade ?? data.endereco.cidade,
+          estado: json.estado ?? data.endereco.estado,
+          complemento: json.complemento ?? data.endereco.complemento,
+        },
       });
-      setHasFetched(true);
     } catch {
-      setFetchError("Beneficiário não encontrado para este CPF.");
+      // silencioso — usuário pode preencher manualmente
     } finally {
-      setIsFetching(false);
+      setIsFetchingCep(false);
     }
   };
+
 
   // ─── Shared field blocks ────────────────────────────────────────────────────
 
@@ -200,13 +187,18 @@ export default function Beneficiary({
       </div>
       <div className="space-y-2">
         <Label htmlFor={`cep-${data.cpf}`}>CEP</Label>
-        <Input
-          value={formatCEP(data.endereco.cep)}
-          onChange={(e) => handleChange("endereco", { ...data.endereco, cep: e.target.value })}
-          placeholder="00000-000"
-          type="text"
-          id={`cep-${data.cpf}`}
-        />
+        <div className="relative">
+          <Input
+            value={formatCEP(data.endereco.cep)}
+            onChange={(e) => handleCepChange(e.target.value)}
+            placeholder="00000-000"
+            type="text"
+            id={`cep-${data.cpf}`}
+          />
+          {isFetchingCep && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400 pointer-events-none" />
+          )}
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor={`estado-${data.cpf}`}>Estado</Label>
@@ -330,70 +322,148 @@ export default function Beneficiary({
       );
     }
 
-    // ALTERACAO: lookup por CPF → formulário completo
+    // ALTERACAO: formulário direto
     if (tipo === "ALTERACAO_DE_DADOS_CADASTRAIS") {
       return (
         <motion.div key="alteracao" {...fadeSlide} className="contents">
-          {!hasFetched ? (
-            <div className="col-span-full space-y-3">
-              <p className="text-sm text-gray-500">
-                Informe o CPF do beneficiário para carregar os dados cadastrados.
-              </p>
-              <div className="flex gap-2 items-end">
-                <div className="space-y-2 flex-1">
-                  <Label htmlFor={`cpf-busca-${data.cpf}`}>CPF</Label>
-                  <Input
-                    value={formatCPF(cpfSearch)}
-                    onChange={(e) => {
-                      setCpfSearch(e.target.value);
-                      setFetchError(null);
-                    }}
-                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && handleFetchByCpf()}
-                    placeholder="000.000.000-00"
-                    type="text"
-                    id={`cpf-busca-${data.cpf}`}
+          {/* Nome */}
+          {fieldNome}
+
+          {/* CPF */}
+          {fieldCpf}
+
+          {/* Documento pessoal */}
+          {fieldDocPessoal}
+
+          {/* Dependência + titular */}
+          <div className="space-y-2">
+            <Label htmlFor={`dep-${data.cpf}`}>Dependência</Label>
+            <CustomSelect
+              id={`dep-${data.cpf}`}
+              label="Selecione a dependência"
+              onChange={(e) => handleChange("dependencia", e)}
+              options={dependencies}
+              value={data.dependencia}
+            />
+          </div>
+          <div className={`space-y-2 ${data.dependencia === "TITULAR" ? "hidden" : ""}`}>
+            <Label htmlFor={`titular-${data.cpf}`}>Nome Titular</Label>
+            <Input
+              value={data.nomeTitular}
+              onChange={(e) => handleChange("nomeTitular", e.target.value)}
+              placeholder="Ex: Josué da Silva"
+              type="text"
+              id={`titular-${data.cpf}`}
+            />
+          </div>
+
+              {/* Toggle endereço */}
+              <div className="col-span-full flex items-center gap-3">
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={alterarEndereco}
+                  onClick={() => setAlterarEndereco((v) => !v)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none ${
+                    alterarEndereco ? "bg-(--azul)" : "bg-gray-200"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                      alterarEndereco ? "translate-x-5" : "translate-x-0"
+                    }`}
                   />
-                </div>
-                <button
-                  type="button"
-                  disabled={isFetching}
-                  onClick={handleFetchByCpf}
-                  className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  {isFetching ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Search className="h-4 w-4" />
-                  )}
-                  Buscar
                 </button>
+                <span
+                  className="text-sm font-medium cursor-pointer"
+                  onClick={() => setAlterarEndereco((v) => !v)}
+                >
+                  Alterar endereço
+                </span>
               </div>
-              {fetchError && (
-                <p className="text-sm text-red-500">{fetchError}</p>
+
+              {alterarEndereco && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor={`cep-${data.cpf}`}>CEP</Label>
+                    <div className="relative">
+                      <Input
+                        value={formatCEP(data.endereco.cep)}
+                        onChange={(e) => handleCepChange(e.target.value)}
+                        placeholder="00000-000"
+                        type="text"
+                        id={`cep-${data.cpf}`}
+                      />
+                      {isFetchingCep && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400 pointer-events-none" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`estado-${data.cpf}`}>Estado</Label>
+                    <Input
+                      value={data.endereco.estado}
+                      onChange={(e) => handleChange("endereco", { ...data.endereco, estado: e.target.value })}
+                      placeholder="Ex: São Paulo"
+                      type="text"
+                      id={`estado-${data.cpf}`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`cidade-${data.cpf}`}>Cidade</Label>
+                    <Input
+                      value={data.endereco.cidade}
+                      onChange={(e) => handleChange("endereco", { ...data.endereco, cidade: e.target.value })}
+                      placeholder="Ex: São Paulo"
+                      type="text"
+                      id={`cidade-${data.cpf}`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`bairro-${data.cpf}`}>Bairro</Label>
+                    <Input
+                      value={data.endereco.bairro}
+                      onChange={(e) => handleChange("endereco", { ...data.endereco, bairro: e.target.value })}
+                      placeholder="Ex: Jardins"
+                      type="text"
+                      id={`bairro-${data.cpf}`}
+                    />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor={`logradouro-${data.cpf}`}>Logradouro</Label>
+                    <Input
+                      value={data.endereco.logradouro}
+                      onChange={(e) => handleChange("endereco", { ...data.endereco, logradouro: e.target.value })}
+                      placeholder="Ex: Av. Paulista"
+                      type="text"
+                      id={`logradouro-${data.cpf}`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`numero-${data.cpf}`}>Número</Label>
+                    <Input
+                      value={data.endereco.numero}
+                      onChange={(e) => handleChange("endereco", { ...data.endereco, numero: e.target.value })}
+                      placeholder="Ex: 1439"
+                      type="text"
+                      id={`numero-${data.cpf}`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`compl-${data.cpf}`}>Complemento</Label>
+                    <Input
+                      value={data.endereco.complemento}
+                      onChange={(e) => handleChange("endereco", { ...data.endereco, complemento: e.target.value })}
+                      placeholder="Ex: Apto. 13"
+                      type="text"
+                      id={`compl-${data.cpf}`}
+                    />
+                  </div>
+                </>
               )}
-            </div>
-          ) : (
-            <>
-              <div className="col-span-full flex items-center justify-between">
-                <p className="text-sm text-green-600 font-medium">
-                  Dados carregados — edite o que for necessário.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setHasFetched(false);
-                    setCpfSearch("");
-                  }}
-                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                >
-                  Trocar CPF
-                </button>
-              </div>
-              {fieldNome}
-              {fieldCpf}
-              {fullAddressAndDetails}
-            </>
-          )}
+
+          {/* Observação */}
+          {fieldObs}
         </motion.div>
       );
     }
@@ -416,7 +486,7 @@ export default function Beneficiary({
         <CustomSelect
           id={`tipo-${data.cpf}`}
           label="Selecione a movimentação"
-          onChange={handleTipoChange}
+          onChange={(value) => handleChange("tipoMovimentacao", value)}
           options={movements}
           value={data.tipoMovimentacao}
         />

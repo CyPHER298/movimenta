@@ -12,7 +12,6 @@ import {
   ArrowDownNarrowWide,
   ArrowUpNarrowWide,
 } from "lucide-react";
-import { Input } from "@/app/components/ui/Input/Input";
 import { CustomSelect } from "@/app/components/ui/Select/Select";
 import StatCard from "@/app/components/StatCard/StatCard";
 import { useEffect, useMemo, useState } from "react";
@@ -21,6 +20,7 @@ import NewMovementCard from "@/app/components/NewMovementCard/NewMovementCard";
 import { verifyConnected } from "@/app/utils/verifyConnected";
 import { MovementParentCard } from "@/app/components/MovementCard/MovementParentCard";
 import { resolveMovementStatus } from "@/app/utils/format";
+import { getUserRole } from "@/services/auth";
 
 type SortOrder = "asc" | "desc" | "";
 type StatusFilter = "pendente" | "em_analise" | "concluido" | "";
@@ -38,22 +38,35 @@ export default function Page() {
   const [filterStatus, setFilterStatus] = useState<StatusFilter>("");
 
   const stats = [
-    { label: "Total", value: movements.length, icon: Files, color: "gray-icon" },
+    {
+      label: "Total",
+      value: movements.length,
+      icon: Files,
+      color: "gray-icon",
+    },
     {
       label: "Pendentes",
-      value: movements.filter((m) => resolveMovementStatus(m.beneficiariosMovimentacao) === "pendente").length,
+      value: movements.filter(
+        (m) =>
+          resolveMovementStatus(m.beneficiariosMovimentacao) === "pendente",
+      ).length,
       icon: Layers,
       color: "orange-icon",
     },
     {
       label: "Em Análise",
-      value: movements.filter((m) => resolveMovementStatus(m.beneficiariosMovimentacao) === "em_analise").length,
+      value: movements.filter(
+        (m) => resolveMovementStatus(m.beneficiariosMovimentacao) === "analise",
+      ).length,
       icon: Clock,
       color: "blue-icon",
     },
     {
       label: "Concluídos",
-      value: movements.filter((m) => resolveMovementStatus(m.beneficiariosMovimentacao) === "concluido").length,
+      value: movements.filter(
+        (m) =>
+          resolveMovementStatus(m.beneficiariosMovimentacao) === "concluido",
+      ).length,
       icon: Files,
       color: "green-icon",
     },
@@ -174,23 +187,22 @@ export default function Page() {
         </div>
 
         {/* Filtros */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col lg:flex-row gap-3 items-center">
           {/* Linha 1: busca (largura total) */}
-          <div className="relative w-full focus-within:scale-100">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10 pointer-events-none" />
-            <div className="[&_input]:pl-9">
-              <Input
-                id="search"
-                type="text"
-                placeholder="Buscar por empresa ou beneficiário..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+          <div className="flex w-full items-center bg-white border border-gray-200 rounded-xl pl-4 pr-8 py-1 gap-1">
+            <Search className="p-1 m-1 text-gray-400" />
+            <input
+              id="search"
+              type="text"
+              placeholder="Buscar por empresa ou beneficiário..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-2 border-b border-white hover:border-(--blue-icon) focus:border-(--blue-icon) focus:outline-none transition"
+            />
           </div>
 
           {/* Linha 2: A-Z | data | status — empilha no mobile */}
-          <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-3">
+          <div className="grid grid-cols-2 gap-3 sm:flex sm:items-center sm:gap-3 w-full lg:w-auto">
             {/* Ordenação A-Z */}
             <button
               onClick={() =>
@@ -199,10 +211,18 @@ export default function Page() {
                 )
               }
               className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium shadow-sm transition cursor-pointer whitespace-nowrap
-                ${sortOrder ? "border-(--blue-icon) bg-(--blue-icon)/10 text-(--azul)" : "border-gray-200 bg-white text-gray-600 hover:border-(--blue-icon)"}`}
+                ${sortOrder ? "border-blue-200 bg-(--blue-icon)/10 text-(--azul)" : "border-gray-200 bg-white text-gray-600 hover:border-blue-200"}`}
             >
-              {sortOrder === "desc" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownAZ className="h-4 w-4" />}
-              {sortOrder === "asc" ? "A → Z" : sortOrder === "desc" ? "Z → A" : "A - Z"}
+              {sortOrder === "desc" ? (
+                <ArrowUpAZ className="h-4 w-4" />
+              ) : (
+                <ArrowDownAZ className="h-4 w-4" />
+              )}
+              {sortOrder === "asc"
+                ? "A → Z"
+                : sortOrder === "desc"
+                  ? "Z → A"
+                  : "A - Z"}
             </button>
 
             {/* Ordenação por data */}
@@ -213,14 +233,18 @@ export default function Page() {
                 )
               }
               className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium shadow-sm transition cursor-pointer whitespace-nowrap
-                ${sortDate ? "border-(--blue-icon) bg-(--blue-icon)/10 text-(--azul)" : "border-gray-200 bg-white text-gray-600 hover:border-(--blue-icon)"}`}
+                ${sortDate ? "border-blue-200 bg-(--blue-icon)/10 text-(--azul)" : "border-gray-200 bg-white text-gray-600 hover:border-blue-200"}`}
             >
               {sortDate === "asc" ? (
                 <ArrowUpNarrowWide className="h-4 w-4" />
               ) : (
                 <ArrowDownNarrowWide className="h-4 w-4" />
               )}
-              {sortDate === "desc" ? "Mais recente" : sortDate === "asc" ? "Mais antiga" : "Data"}
+              {sortDate === "desc"
+                ? "Mais recente"
+                : sortDate === "asc"
+                  ? "Mais antiga"
+                  : "Data"}
             </button>
 
             {/* Filtro de status — ocupa as 2 colunas no mobile */}
@@ -231,10 +255,13 @@ export default function Page() {
                 value={filterStatus}
                 onChange={(val) => setFilterStatus(val as StatusFilter)}
                 options={[
-                  { label: "Todos os status", value: ""          },
-                  { label: "Pendente",        value: "pendente"  },
-                  { label: "Em Análise",      value: "em_analise"},
-                  { label: "Concluído",       value: "concluido" },
+                  { label: "Todos os status", value: "" },
+                  { label: "Pendente", value: "pendente" },
+                  { label: "Análise", value: "analise" },
+                  { label: "Enviado Operadora", value: "enviado_operadora" },
+                  { label: "Pend. Operadora", value: "pendente_operadora" },
+                  { label: "Declínio", value: "declinio" },
+                  { label: "Concluído", value: "concluido" },
                 ]}
               />
             </div>

@@ -17,6 +17,7 @@ import {
   UserPlus,
   Users,
   X,
+  Group,
 } from "lucide-react";
 
 const statusOptions = [
@@ -201,12 +202,6 @@ export default function Page() {
 
   const stats = [
     {
-      label: "Total",
-      value: beneficiarios.length,
-      icon: Users,
-      color: "gray-icon",
-    },
-    {
       label: "Pendentes",
       value: beneficiarios.filter((b) => b.status?.toLowerCase() === "pendente")
         .length,
@@ -215,11 +210,33 @@ export default function Page() {
     },
     {
       label: "Em Análise",
-      value: beneficiarios.filter(
-        (b) => b.status?.toLowerCase() === "analise",
-      ).length,
+      value: beneficiarios.filter((b) => b.status?.toLowerCase() === "analise")
+        .length,
       icon: Search,
       color: "blue-icon",
+    },
+    {
+      label: "Enviados",
+      value: beneficiarios.filter(
+        (b) => b.status?.toLowerCase() === "enviado_operadora",
+      ).length,
+      icon: Send,
+      color: "indigo-icon",
+    },
+    {
+      label: "Pend. Operadora",
+      value: beneficiarios.filter(
+        (b) => b.status?.toLowerCase() === "pendente_operadora",
+      ).length,
+      icon: AlertCircle,
+      color: "yellow-icon",
+    },
+    {
+      label: "Declínio",
+      value: beneficiarios.filter((b) => b.status?.toLowerCase() === "declinio")
+        .length,
+      icon: X,
+      color: "red-icon",
     },
     {
       label: "Concluídos",
@@ -236,6 +253,9 @@ export default function Page() {
   return (
     <div className="space-y-8 p-4 sm:p-6 lg:p-8">
       {/* Hero card */}
+      <h1 className="font-bold text-3xl flex items-center gap-2">
+        <Users className="text-(--blue-icon)"/> {beneficiarios.length}
+      </h1>
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-md sm:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-3 min-w-0">
@@ -262,7 +282,7 @@ export default function Page() {
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div className="rounded-lg bg-(--light-gray) px-3 py-2">
+              <div className="rounded-lg bg-(--light-gray) px-3 py-2 inset-shadow-sm/20">
                 <p className="text-xs uppercase tracking-wide text-gray-500">
                   Data
                 </p>
@@ -271,7 +291,7 @@ export default function Page() {
                 </p>
               </div>
               {modalidade && (
-                <div className="rounded-lg bg-(--light-gray) px-3 py-2">
+                <div className="rounded-lg bg-(--light-gray) px-3 py-2 inset-shadow-sm/20">
                   <p className="text-xs uppercase tracking-wide text-gray-500">
                     Modalidade
                   </p>
@@ -282,7 +302,7 @@ export default function Page() {
           </div>
 
           {movement?.observacao && (
-            <div className="rounded-xl border border-gray-200 bg-(--light-gray) px-4 py-3 lg:min-w-64 lg:max-w-80">
+            <div className="rounded-xl border border-gray-200 bg-(--light-gray) px-4 py-3 lg:min-w-64 lg:max-w-80 inset-shadow-sm/20">
               <p className="text-xs uppercase tracking-wide text-gray-500 mb-1">
                 Observação
               </p>
@@ -293,7 +313,7 @@ export default function Page() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {stats.map((stat, i) => (
           <StatCard
             key={i}
@@ -321,8 +341,6 @@ export default function Page() {
         ) : beneficiarios.length ? (
           <ul className="grid gap-2">
             {beneficiarios.map((b) => {
-              const st =
-                statusMap[b.status?.toLowerCase()] ?? statusMap["pendente"];
               const typeMov = tipoMap[b.tipoMovimentacao] ?? {
                 Icon: SearchAlert,
                 className: "text-gray-500",
@@ -360,22 +378,31 @@ export default function Page() {
                                 if (opt.value === "PENDENTE_OPERADORA") {
                                   setDeclinioText((prev) => ({
                                     ...prev,
-                                    [b.idBeneficiario]: prev[b.idBeneficiario] ?? "",
+                                    [b.idBeneficiario]:
+                                      prev[b.idBeneficiario] ?? "",
                                   }));
                                   setMovement((prev) => {
                                     if (!prev) return prev;
                                     return {
                                       ...prev,
                                       beneficiariosMovimentacao:
-                                        prev.beneficiariosMovimentacao.map((ben) =>
-                                          ben.idBeneficiario === b.idBeneficiario
-                                            ? { ...ben, status: "PENDENTE_OPERADORA" }
-                                            : ben,
+                                        prev.beneficiariosMovimentacao.map(
+                                          (ben) =>
+                                            ben.idBeneficiario ===
+                                            b.idBeneficiario
+                                              ? {
+                                                  ...ben,
+                                                  status: "PENDENTE_OPERADORA",
+                                                }
+                                              : ben,
                                         ),
                                     };
                                   });
                                 } else {
-                                  handleStatusChange(b.idBeneficiario, opt.value);
+                                  handleStatusChange(
+                                    b.idBeneficiario,
+                                    opt.value,
+                                  );
                                 }
                               }}
                               title={opt.label}

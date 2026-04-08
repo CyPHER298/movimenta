@@ -1,14 +1,17 @@
 import { BeneficiaryMovimentsTypes } from "@/app/types/BeneficiaryMovimentsTypes";
 import { parseDate, resolveMovementStatus } from "@/app/utils/format";
 import {
+  AlertCircle,
   CheckCircle2,
   Clock,
   CreditCard,
   RefreshCw,
   Search,
+  Send,
   UserMinus,
   UserPlus,
   UsersRound,
+  X,
 } from "lucide-react";
 import { GiHealthNormal } from "react-icons/gi";
 import { FaTooth } from "react-icons/fa";
@@ -96,9 +99,36 @@ function getModalidade(modalidade: string): ModalidadeConfig {
 type StatusConfig = { Icon: LucideIcon; label: string; badgeClass: string };
 
 const statusDisplayMap: Record<string, StatusConfig> = {
-  pendente:   { Icon: Clock,        label: "Pendente",   badgeClass: "bg-orange-50 text-orange-700 border-orange-200" },
-  em_analise: { Icon: Search,       label: "Em Análise", badgeClass: "bg-blue-50 text-blue-700 border-blue-200"       },
-  concluido:  { Icon: CheckCircle2, label: "Concluído",  badgeClass: "bg-green-50 text-green-700 border-green-200"    },
+  pendente: {
+    Icon: Clock,
+    label: "Pendente",
+    badgeClass: "bg-orange-50 text-orange-700 border-orange-200",
+  },
+  analise: {
+    Icon: Search,
+    label: "Em Análise",
+    badgeClass: "bg-blue-50 text-blue-700 border-blue-200",
+  },
+  enviado_operadora: {
+    Icon: Send,
+    label: "Enviado",
+    badgeClass: "bg-indigo-50 text-indigo-700 border-indigo-300",
+  },
+  pendente_operadora: {
+    Icon: AlertCircle,
+    label: "Pendente OP",
+    badgeClass: "bg-yellow-50 text-yellow-700 border-yellow-300",
+  },
+  declinio: {
+    Icon: X,
+    label: "Declínio",
+    badgeClass: "bg-red-50 text-red-700 border-red-200",
+  },
+  concluido: {
+    Icon: CheckCircle2,
+    label: "Concluído",
+    badgeClass: "bg-green-50 text-green-700 border-green-200",
+  },
 };
 
 function groupByTipo(beneficiarios: BeneficiaryMovimentsTypes[]) {
@@ -119,10 +149,17 @@ export const MovementParentCard = ({
 }: MovementParentProps) => {
   const { Icon, iconClass } = getModalidade(modalidade);
   const tipoGroups = groupByTipo(beneficiarios);
-  const { Icon: StatusIcon, label: statusLabel, badgeClass: statusBadgeClass } = statusDisplayMap[resolveMovementStatus(beneficiarios)];
+  const {
+    Icon: StatusIcon,
+    label: statusLabel,
+    badgeClass: statusBadgeClass,
+  } = statusDisplayMap[resolveMovementStatus(beneficiarios)];
 
   return (
-    <Link href={`/movements/${id}`} className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:border-(--blue-icon) hover:shadow-md lg:active:scale-96 active:scale-90">
+    <Link
+      href={`/movements/${id}`}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-all duration-200 hover:border-(--blue-icon) hover:shadow-md lg:active:scale-96 active:scale-90"
+    >
       <div className="flex flex-1 flex-col gap-4 p-4 sm:p-5">
         {/* Header: nome + badge total */}
         <div className="flex items-start justify-between gap-3">
@@ -132,7 +169,7 @@ export const MovementParentCard = ({
               {nomeEmpresa}
             </h2>
           </div>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gray-100 bg-(--light-gray) px-2.5 py-1 text-xs font-semibold text-gray-600">
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-(--blue-icon)/40 bg-(--light-gray) px-2.5 py-1 text-xs font-semibold text-gray-600">
             <UsersRound
               className="h-3.5 w-3.5 text-(--blue-icon)"
               aria-hidden
@@ -143,7 +180,7 @@ export const MovementParentCard = ({
 
         {/* Breakdown por tipo */}
         {Object.keys(tipoGroups).length > 0 && (
-          <div className="flex flex-col gap-1.5 rounded-xl border border-gray-100 bg-(--light-gray) px-3 py-2.5">
+          <div className="flex flex-col gap-1.5 rounded-xl border border-gray-200 bg-(--light-gray) px-3 py-2.5 inset-shadow-sm/20">
             {Object.entries(tipoGroups).map(([tipo, count]) => {
               const config = tipoMap[tipo];
               if (!config)
@@ -217,7 +254,9 @@ export const MovementParentCard = ({
             </p>
           </div>
         </div>
-        <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass}`}>
+        <span
+          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass}`}
+        >
           <StatusIcon className="h-3.5 w-3.5" aria-hidden />
           {statusLabel}
         </span>
