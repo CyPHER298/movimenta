@@ -20,20 +20,3 @@ export async function deleteAuthCookie(name: string) {
   cookieStore.delete(name)
 }
 
-export async function getUserFromToken(): Promise<{ nome: string; role: string } | null> {
-  const cookieStore = await cookies();
-  const tokenCookie = cookieStore.get("token");
-  if (!tokenCookie?.value) return null;
-
-  try {
-    const raw = tokenCookie.value.replace(/^Bearer\s+/i, "");
-    const payload = raw.split(".")[1];
-    const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf-8"));
-    return {
-      nome: decoded.nome ?? decoded.name ?? decoded.sub ?? "",
-      role: decoded.role ?? decoded.tipo ?? decoded.perfil ?? "",
-    };
-  } catch {
-    return null;
-  }
-}
