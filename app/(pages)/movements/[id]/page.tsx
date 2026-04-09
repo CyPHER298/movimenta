@@ -7,8 +7,11 @@ import { useEffect, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Clock,
   CreditCard,
+  Loader2,
   RefreshCw,
   SearchAlert,
   Search,
@@ -19,6 +22,19 @@ import {
   X,
   Group,
 } from "lucide-react";
+import { BeneficiaryTypes } from "@/app/types/BeneficiaryTypes";
+
+type BeneficiarioDetail = BeneficiaryTypes & {
+  idBeneficiario: string;
+  idMovimentacao: string;
+};
+
+const dependenciaMap: Record<string, string> = {
+  TITULAR: "Titular",
+  CONJUGE: "Cônjuge",
+  FILHO: "Filho(a)",
+  AGREGADO: "Agregado",
+};
 
 const statusOptions = [
   {
@@ -65,7 +81,7 @@ const statusOptions = [
   },
 ];
 import StatCard from "@/app/components/StatCard/StatCard";
-import { parseDate, resolveMovementStatus } from "@/app/utils/format";
+import { formatCPF, parseDate, resolveMovementStatus } from "@/app/utils/format";
 import { GiHealthNormal } from "react-icons/gi";
 import { FaTooth } from "react-icons/fa";
 
@@ -149,6 +165,27 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [declinioText, setDeclinioText] = useState<Record<string, string>>({});
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [detailsCache, setDetailsCache] = useState<Record<string, BeneficiarioDetail>>({});
+  const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
+
+  async function toggleExpand(idBeneficiario: string) {
+    if (expandedId === idBeneficiario) {
+      setExpandedId(null);
+      return;
+    }
+    setExpandedId(idBeneficiario);
+    if (detailsCache[idBeneficiario]) return;
+    try {
+      setLoadingDetailId(idBeneficiario);
+      const res = await api.get(`/movimentacao/beneficiario/${idBeneficiario}`);
+      setDetailsCache((prev) => ({ ...prev, [idBeneficiario]: res.data }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingDetailId(null);
+    }
+  }
 
   const handleStatusChange = async (
     idBeneficiario: string,
@@ -363,6 +400,20 @@ export default function Page() {
                         <p className="text-xs text-gray-500">
                           {tipoLabel[b.tipoMovimentacao] ?? b.tipoMovimentacao}
                         </p>
+                        <button
+                          type="button"
+                          onClick={() => toggleExpand(b.idBeneficiario)}
+                          className="flex items-center gap-1 text-xs text-gray-400 hover:text-(--azul) transition-colors cursor-pointer"
+                          title={expandedId === b.idBeneficiario ? "Ocultar dados" : "Ver dados do beneficiário"}
+                        >
+                          {loadingDetailId === b.idBeneficiario ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : expandedId === b.idBeneficiario ? (
+                            <ChevronUp className="h-3.5 w-3.5" />
+                          ) : (
+                            <ChevronDown className="h-3.5 w-3.5" />
+                          )}
+                        </button>
                       </div>
                       <div className="flex flex-wrap gap-1 shrink-0">
                         {statusOptions.map((opt) => {
@@ -416,6 +467,55 @@ export default function Page() {
                         })}
                       </div>
                     </div>
+
+                    {expandedId === b.idBeneficiario && (() => {
+                      const d = detailsCache[b.idBeneficiario];
+                      if (loadingDetailId === b.idBeneficiario) {
+                        return (
+                          <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Carregando dados...
+                          </div>
+                        );
+                      }
+                      if (!d) return null;
+                      const fields = [
+                        { label: "CPF", value: formatCPF(d.cpf) },
+                        { label: "Nascimento", value: parseDate(d.dataNascimento) },
+                        { label: "Dependência", value: dependenciaMap[d.dependencia] ?? d.dependencia },
+                        d.dependencia !== "TITULAR" && d.nomeTitular
+                          ? { label: "Titular", value: d.nomeTitular }
+                          : null,
+                        d.planoAtual ? { label: "Plano Atual", value: d.planoAtual } : null,
+                        d.endereco?.logradouro
+                          ? {
+                              label: "Endereço",
+                              value: [
+                                d.endereco.logradouro,
+                                d.endereco.numero,
+                                d.endereco.complemento,
+                                d.endereco.bairro,
+                                d.endereco.cidade,
+                                d.endereco.estado,
+                                d.endereco.cep,
+                              ]
+                                .filter(Boolean)
+                                .join(", "),
+                            }
+                          : null,
+                        d.observacao ? { label: "Observação", value: d.observacao } : null,
+                      ].filter(Boolean) as { label: string; value: string }[];
+                      return (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 pt-1 border-t border-gray-200">
+                          {fields.map(({ label, value }) => (
+                            <div key={label} className="rounded-lg bg-white border border-gray-200 px-3 py-2 text-xs">
+                              <p className="uppercase tracking-wide text-gray-400 mb-0.5">{label}</p>
+                              <p className="font-semibold text-gray-700 break-words">{value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
 
                     {b.status?.toUpperCase() === "PENDENTE_OPERADORA" && (
                       <div className="flex gap-2 items-center">

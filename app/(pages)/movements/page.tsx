@@ -39,23 +39,54 @@ type UserMovementItem = {
 };
 
 const statusMap: Record<string, { label: string; className: string }> = {
-  PENDENTE: { label: "Pendente", className: "bg-orange-50 text-orange-700 border-orange-200" },
-  ANALISE: { label: "Em Análise", className: "bg-blue-50 text-blue-700 border-blue-200" },
-  ENVIADO_OPERADORA: { label: "Enviado", className: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  PENDENTE_OPERADORA: { label: "Pend. Operadora", className: "bg-yellow-50 text-yellow-700 border-yellow-200" },
-  DECLINIO: { label: "Declínio", className: "bg-red-50 text-red-700 border-red-200" },
-  CONCLUIDO: { label: "Concluído", className: "bg-green-50 text-green-700 border-green-200" },
+  PENDENTE: {
+    label: "Pendente",
+    className: "bg-orange-50 text-orange-700 border-orange-200",
+  },
+  ANALISE: {
+    label: "Em Análise",
+    className: "bg-blue-50 text-blue-700 border-blue-200",
+  },
+  ENVIADO_OPERADORA: {
+    label: "Enviado",
+    className: "bg-indigo-50 text-indigo-700 border-indigo-200",
+  },
+  PENDENTE_OPERADORA: {
+    label: "Pend. Operadora",
+    className: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  },
+  DECLINIO: {
+    label: "Declínio",
+    className: "bg-red-50 text-red-700 border-red-200",
+  },
+  CONCLUIDO: {
+    label: "Concluído",
+    className: "bg-green-50 text-green-700 border-green-200",
+  },
 };
 
-const tipoMap: Record<string, { label: string; Icon: React.ElementType; iconClass: string }> = {
+const tipoMap: Record<
+  string,
+  { label: string; Icon: React.ElementType; iconClass: string }
+> = {
   INCLUSAO: { label: "Inclusão", Icon: UserPlus, iconClass: "text-green-500" },
   EXCLUSAO: { label: "Exclusão", Icon: UserMinus, iconClass: "text-red-500" },
-  ALTERACAO_DE_DADOS_CADASTRAIS: { label: "Alteração", Icon: RefreshCw, iconClass: "text-orange-500" },
-  SEGUNDA_VIA_CARTEIRINHA: { label: "2ª Via", Icon: CreditCard, iconClass: "text-purple-500" },
+  ALTERACAO_DE_DADOS_CADASTRAIS: {
+    label: "Alteração",
+    Icon: RefreshCw,
+    iconClass: "text-orange-500",
+  },
+  SEGUNDA_VIA_CARTEIRINHA: {
+    label: "2ª Via",
+    Icon: CreditCard,
+    iconClass: "text-purple-500",
+  },
 };
 
 export default function Page() {
   const [role, setRole] = useState<"USER" | "ADMIN" | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true); // Para desabilitar o botão "Próximo"
 
   // Admin state
   const [movements, setMovements] = useState<MovementTypes[]>([]);
@@ -77,8 +108,9 @@ export default function Page() {
       try {
         setIsLoading(true);
         if (r === "ADMIN") {
-          const res = await api.get("/movimentacao");
-          setMovements(res.data || []);
+          const res = await api.get(`/movimentacao?page=${page}`);
+          setMovements(res.data.content || []);
+          console.log(res.data.content);
         } else {
           const res = await api.get("/movimentacao/user");
           setUserMovements(res.data || []);
@@ -90,27 +122,41 @@ export default function Page() {
       }
     }
     load();
-  }, []);
+  }, [page]);
 
   // ── Admin: stats + filtered ─────────────────────────────────────────────────
   const adminStats = useMemo(
     () => [
-      { label: "Total", value: movements.length, icon: Files, color: "gray-icon" },
+      {
+        label: "Total",
+        value: movements.length,
+        icon: Files,
+        color: "gray-icon",
+      },
       {
         label: "Pendentes",
-        value: movements.filter((m) => resolveMovementStatus(m.beneficiariosMovimentacao) === "pendente").length,
+        value: movements.filter(
+          (m) =>
+            resolveMovementStatus(m.beneficiariosMovimentacao) === "pendente",
+        ).length,
         icon: Layers,
         color: "orange-icon",
       },
       {
         label: "Em Análise",
-        value: movements.filter((m) => resolveMovementStatus(m.beneficiariosMovimentacao) === "analise").length,
+        value: movements.filter(
+          (m) =>
+            resolveMovementStatus(m.beneficiariosMovimentacao) === "analise",
+        ).length,
         icon: Clock,
         color: "blue-icon",
       },
       {
         label: "Concluídos",
-        value: movements.filter((m) => resolveMovementStatus(m.beneficiariosMovimentacao) === "concluido").length,
+        value: movements.filter(
+          (m) =>
+            resolveMovementStatus(m.beneficiariosMovimentacao) === "concluido",
+        ).length,
         icon: Files,
         color: "green-icon",
       },
@@ -124,25 +170,38 @@ export default function Page() {
       const matchSearch =
         !q ||
         m.nomeEmpresa.toLowerCase().includes(q) ||
-        m.beneficiariosMovimentacao.some((b) => b.nome.toLowerCase().includes(q));
+        m.beneficiariosMovimentacao.some((b) =>
+          b.nome.toLowerCase().includes(q),
+        );
       const matchStatus =
-        !filterStatus || resolveMovementStatus(m.beneficiariosMovimentacao) === filterStatus;
+        !filterStatus ||
+        resolveMovementStatus(m.beneficiariosMovimentacao) === filterStatus;
       return matchSearch && matchStatus;
     });
-    if (sortOrder === "asc") result = [...result].sort((a, b) => a.nomeEmpresa.localeCompare(b.nomeEmpresa));
-    if (sortOrder === "desc") result = [...result].sort((a, b) => b.nomeEmpresa.localeCompare(a.nomeEmpresa));
+    if (sortOrder === "asc")
+      result = [...result].sort((a, b) =>
+        a.nomeEmpresa.localeCompare(b.nomeEmpresa),
+      );
+    if (sortOrder === "desc")
+      result = [...result].sort((a, b) =>
+        b.nomeEmpresa.localeCompare(a.nomeEmpresa),
+      );
     if (sortDate) {
       result = [...result].sort((a, b) => {
         const toTs = (d: string | number[]) =>
           Array.isArray(d)
             ? new Date(d[0], d[1] - 1, d[2], d[3] ?? 0, d[4] ?? 0).getTime()
             : new Date(d).getTime();
-        return sortDate === "desc" ? toTs(b.dataMovimentacao) - toTs(a.dataMovimentacao) : toTs(a.dataMovimentacao) - toTs(b.dataMovimentacao);
+        return sortDate === "desc"
+          ? toTs(b.dataMovimentacao) - toTs(a.dataMovimentacao)
+          : toTs(a.dataMovimentacao) - toTs(b.dataMovimentacao);
       });
     }
     result = [...result].sort((a, b) => {
-      const aCon = resolveMovementStatus(a.beneficiariosMovimentacao) === "concluido";
-      const bCon = resolveMovementStatus(b.beneficiariosMovimentacao) === "concluido";
+      const aCon =
+        resolveMovementStatus(a.beneficiariosMovimentacao) === "concluido";
+      const bCon =
+        resolveMovementStatus(b.beneficiariosMovimentacao) === "concluido";
       if (aCon === bCon) return 0;
       return aCon ? 1 : -1;
     });
@@ -152,22 +211,33 @@ export default function Page() {
   // ── User: stats + filtered ──────────────────────────────────────────────────
   const userStats = useMemo(
     () => [
-      { label: "Total", value: userMovements.length, icon: Files, color: "gray-icon" },
+      {
+        label: "Total",
+        value: userMovements.length,
+        icon: Files,
+        color: "gray-icon",
+      },
       {
         label: "Pendentes",
-        value: userMovements.filter((m) => m.status?.toUpperCase() === "PENDENTE").length,
+        value: userMovements.filter(
+          (m) => m.status?.toUpperCase() === "PENDENTE",
+        ).length,
         icon: Layers,
         color: "orange-icon",
       },
       {
         label: "Em Análise",
-        value: userMovements.filter((m) => m.status?.toUpperCase() === "ANALISE").length,
+        value: userMovements.filter(
+          (m) => m.status?.toUpperCase() === "ANALISE",
+        ).length,
         icon: Clock,
         color: "blue-icon",
       },
       {
         label: "Concluídos",
-        value: userMovements.filter((m) => m.status?.toUpperCase() === "CONCLUIDO").length,
+        value: userMovements.filter(
+          (m) => m.status?.toUpperCase() === "CONCLUIDO",
+        ).length,
         icon: Files,
         color: "green-icon",
       },
@@ -196,7 +266,8 @@ export default function Page() {
     return result;
   }, [userMovements, search, userFilterStatus]);
 
-  const hasFilters = search || sortOrder || sortDate || filterStatus || userFilterStatus;
+  const hasFilters =
+    search || sortOrder || sortDate || filterStatus || userFilterStatus;
   const stats = role === "ADMIN" ? adminStats : userStats;
 
   return (
@@ -214,16 +285,25 @@ export default function Page() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {stats.map((stat, i) => (
-          <StatCard key={i} label={stat.label} value={stat.value} icon={stat.icon} color={stat.color} />
+          <StatCard
+            key={i}
+            label={stat.label}
+            value={stat.value}
+            icon={stat.icon}
+            color={stat.color}
+          />
         ))}
       </div>
 
       {/* Lista */}
       <div className="rounded-2xl border border-gray-200 bg-white shadow-md p-4 sm:p-6 space-y-4">
         <div>
-          <p className="text-2xl font-semibold tracking-wide">Lista de movimentações</p>
+          <p className="text-2xl font-semibold tracking-wide">
+            Lista de movimentações
+          </p>
           <p className="text-sm text-gray-500">
-            {role === "ADMIN" ? movements.length : userMovements.length} movimentação(ões) no total
+            {role === "ADMIN" ? movements.length : userMovements.length}{" "}
+            movimentação(ões) no total
           </p>
         </div>
 
@@ -245,21 +325,45 @@ export default function Page() {
             {role === "ADMIN" && (
               <>
                 <button
-                  onClick={() => setSortOrder((p) => (p === "asc" ? "desc" : p === "desc" ? "" : "asc"))}
+                  onClick={() =>
+                    setSortOrder((p) =>
+                      p === "asc" ? "desc" : p === "desc" ? "" : "asc",
+                    )
+                  }
                   className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium shadow-sm transition cursor-pointer whitespace-nowrap
                     ${sortOrder ? "border-blue-200 bg-(--blue-icon)/10 text-(--azul)" : "border-gray-200 bg-white text-gray-600 hover:border-blue-200"}`}
                 >
-                  {sortOrder === "desc" ? <ArrowUpAZ className="h-4 w-4" /> : <ArrowDownAZ className="h-4 w-4" />}
-                  {sortOrder === "asc" ? "A → Z" : sortOrder === "desc" ? "Z → A" : "A - Z"}
+                  {sortOrder === "desc" ? (
+                    <ArrowUpAZ className="h-4 w-4" />
+                  ) : (
+                    <ArrowDownAZ className="h-4 w-4" />
+                  )}
+                  {sortOrder === "asc"
+                    ? "A → Z"
+                    : sortOrder === "desc"
+                      ? "Z → A"
+                      : "A - Z"}
                 </button>
 
                 <button
-                  onClick={() => setSortDate((p) => (p === "desc" ? "asc" : p === "asc" ? "" : "desc"))}
+                  onClick={() =>
+                    setSortDate((p) =>
+                      p === "desc" ? "asc" : p === "asc" ? "" : "desc",
+                    )
+                  }
                   className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium shadow-sm transition cursor-pointer whitespace-nowrap
                     ${sortDate ? "border-blue-200 bg-(--blue-icon)/10 text-(--azul)" : "border-gray-200 bg-white text-gray-600 hover:border-blue-200"}`}
                 >
-                  {sortDate === "asc" ? <ArrowUpNarrowWide className="h-4 w-4" /> : <ArrowDownNarrowWide className="h-4 w-4" />}
-                  {sortDate === "desc" ? "Mais recente" : sortDate === "asc" ? "Mais antiga" : "Data"}
+                  {sortDate === "asc" ? (
+                    <ArrowUpNarrowWide className="h-4 w-4" />
+                  ) : (
+                    <ArrowDownNarrowWide className="h-4 w-4" />
+                  )}
+                  {sortDate === "desc"
+                    ? "Mais recente"
+                    : sortDate === "asc"
+                      ? "Mais antiga"
+                      : "Data"}
                 </button>
               </>
             )}
@@ -269,15 +373,43 @@ export default function Page() {
                 id="filterStatus"
                 label="Todos os status"
                 value={role === "ADMIN" ? filterStatus : userFilterStatus}
-                onChange={(val) => role === "ADMIN" ? setFilterStatus(val) : setUserFilterStatus(val)}
+                onChange={(val) =>
+                  role === "ADMIN"
+                    ? setFilterStatus(val)
+                    : setUserFilterStatus(val)
+                }
                 options={[
                   { label: "Todos os status", value: "" },
-                  { label: "Pendente", value: role === "ADMIN" ? "pendente" : "PENDENTE" },
-                  { label: "Em Análise", value: role === "ADMIN" ? "analise" : "ANALISE" },
-                  { label: "Enviado Operadora", value: role === "ADMIN" ? "enviado_operadora" : "ENVIADO_OPERADORA" },
-                  { label: "Pend. Operadora", value: role === "ADMIN" ? "pendente_operadora" : "PENDENTE_OPERADORA" },
-                  { label: "Declínio", value: role === "ADMIN" ? "declinio" : "DECLINIO" },
-                  { label: "Concluído", value: role === "ADMIN" ? "concluido" : "CONCLUIDO" },
+                  {
+                    label: "Pendente",
+                    value: role === "ADMIN" ? "pendente" : "PENDENTE",
+                  },
+                  {
+                    label: "Em Análise",
+                    value: role === "ADMIN" ? "analise" : "ANALISE",
+                  },
+                  {
+                    label: "Enviado Operadora",
+                    value:
+                      role === "ADMIN"
+                        ? "enviado_operadora"
+                        : "ENVIADO_OPERADORA",
+                  },
+                  {
+                    label: "Pend. Operadora",
+                    value:
+                      role === "ADMIN"
+                        ? "pendente_operadora"
+                        : "PENDENTE_OPERADORA",
+                  },
+                  {
+                    label: "Declínio",
+                    value: role === "ADMIN" ? "declinio" : "DECLINIO",
+                  },
+                  {
+                    label: "Concluído",
+                    value: role === "ADMIN" ? "concluido" : "CONCLUIDO",
+                  },
                 ]}
               />
             </div>
@@ -285,35 +417,67 @@ export default function Page() {
         </div>
 
         {isLoading ? (
-          <p className="text-center text-xl italic opacity-60 py-8">Carregando movimentações...</p>
+          <p className="text-center text-xl italic opacity-60 py-8">
+            Carregando movimentações...
+          </p>
         ) : role === "ADMIN" ? (
           filteredAdmin.length === 0 ? (
             <p className="text-center text-xl italic opacity-60 py-8">
-              {hasFilters ? "Nenhuma movimentação encontrada para os filtros aplicados." : "Não há movimentações realizadas."}
+              {hasFilters
+                ? "Nenhuma movimentação encontrada para os filtros aplicados."
+                : "Não há movimentações realizadas."}
             </p>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredAdmin.map((movement) => (
-                <MovementParentCard
-                  key={movement.idMovimentacao}
-                  id={movement.idMovimentacao}
-                  nomeEmpresa={movement.nomeEmpresa}
-                  dataMovimentacao={movement.dataMovimentacao}
-                  observacao={movement.observacao}
-                  modalidade={movement.modalidade}
-                  beneficiarios={movement.beneficiariosMovimentacao}
-                />
-              ))}
-            </div>
+            <>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredAdmin.map((movement) => (
+                  <MovementParentCard
+                    key={movement.idMovimentacao}
+                    id={movement.idMovimentacao}
+                    nomeEmpresa={movement.nomeEmpresa}
+                    dataMovimentacao={movement.dataMovimentacao}
+                    observacao={movement.observacao}
+                    modalidade={movement.modalidade}
+                    beneficiarios={movement.beneficiariosMovimentacao}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center justify-between pt-6 border-t border-gray-100 mt-4">
+                <button
+                  onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  disabled={page === 0 || isLoading}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Anterior
+                </button>
+
+                <span className="text-sm text-gray-600 font-medium">
+                  Página {page + 1}
+                </span>
+
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={!hasMore || isLoading}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Próximo
+                </button>
+              </div>
+            </>
           )
         ) : filteredUser.length === 0 ? (
           <p className="text-center text-xl italic opacity-60 py-8">
-            {hasFilters ? "Nenhuma movimentação encontrada para os filtros aplicados." : "Não há movimentações realizadas."}
+            {hasFilters
+              ? "Nenhuma movimentação encontrada para os filtros aplicados."
+              : "Não há movimentações realizadas."}
           </p>
         ) : (
           <ul className="grid gap-2">
             {filteredUser.map((m) => {
-              const st = statusMap[m.status?.toUpperCase()] ?? { label: m.status, className: "bg-gray-50 text-gray-700 border-gray-200" };
+              const st = statusMap[m.status?.toUpperCase()] ?? {
+                label: m.status,
+                className: "bg-gray-50 text-gray-700 border-gray-200",
+              };
               const tipo = tipoMap[m.tipoMovimentacao?.toUpperCase()] ?? null;
               const isConcluido = m.status?.toUpperCase() === "CONCLUIDO";
               return (
@@ -328,14 +492,22 @@ export default function Page() {
                   >
                     <div className="min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
-                        {tipo && <tipo.Icon className={`h-4 w-4 shrink-0 ${tipo.iconClass}`} />}
-                        <p className="font-semibold text-sm truncate">{m.nomeBeneficiario}</p>
+                        {tipo && (
+                          <tipo.Icon
+                            className={`h-4 w-4 shrink-0 ${tipo.iconClass}`}
+                          />
+                        )}
+                        <p className="font-semibold text-sm truncate">
+                          {m.nomeBeneficiario}
+                        </p>
                       </div>
                       <p className="text-xs text-gray-500 truncate">
                         {m.nomeEmpresa}
                         {m.observacao && <> &middot; {m.observacao}</>}
                       </p>
-                      <p className="text-xs text-gray-400">{parseDate(m.dataMovimentacao)}</p>
+                      <p className="text-xs text-gray-400">
+                        {parseDate(m.dataMovimentacao)}
+                      </p>
                     </div>
                     <div className="flex flex-wrap gap-2 shrink-0">
                       {tipo && (
@@ -343,7 +515,9 @@ export default function Page() {
                           {tipo.label}
                         </span>
                       )}
-                      <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${st.className}`}>
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${st.className}`}
+                      >
                         {st.label}
                       </span>
                     </div>

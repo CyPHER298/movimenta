@@ -2,6 +2,8 @@
 
 import { MovementTypes } from "@/app/types/MovementTypes";
 import {
+  ChevronLeft,
+  ChevronRight,
   Clock,
   CreditCard,
   Files,
@@ -13,7 +15,6 @@ import {
   ArrowUpAZ,
   ArrowDownNarrowWide,
   ArrowUpNarrowWide,
-  ArrowRight,
   UserMinus,
   UserPlus,
 } from "lucide-react";
@@ -100,6 +101,39 @@ const tipoMap: Record<
   },
 };
 
+function Pagination({
+  page,
+  totalPages,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  onChange: (p: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-center gap-2 pt-2">
+      <button
+        onClick={() => onChange(page - 1)}
+        disabled={page === 0}
+        className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-500 transition hover:border-(--blue-icon) hover:text-(--azul) disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      <span className="text-sm text-gray-600">
+        Página <span className="font-semibold">{page + 1}</span> de{" "}
+        <span className="font-semibold">{totalPages}</span>
+      </span>
+      <button
+        onClick={() => onChange(page + 1)}
+        disabled={page >= totalPages - 1}
+        className="flex items-center justify-center rounded-lg border border-gray-200 bg-white p-2 text-gray-500 transition hover:border-(--blue-icon) hover:text-(--azul) disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 export default function Page() {
   const [role, setRole] = useState<"USER" | "ADMIN" | null>(null);
 
@@ -112,6 +146,8 @@ export default function Page() {
   const [sortOrder, setSortOrder] = useState<SortOrder>("");
   const [sortDate, setSortDate] = useState<SortOrder>("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
   // User state
   const [userMovements, setUserMovements] = useState<UserMovementItem[]>([]);
@@ -119,6 +155,17 @@ export default function Page() {
 
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+
+  async function fetchAdminMovements(p: number) {
+    const res = await api.get(`/movimentacao?page=${p}`);
+    setMovements(res.data?.content ?? res.data ?? []);
+    setTotalPages(res.data?.totalPages ?? 0);
+  }
+
+  async function fetchUserMovements() {
+    const res = await api.get("/movimentacao/user");
+    setUserMovements(res.data ?? []);
+  }
 
   useEffect(() => {
     verifyConnected(window.location.href);
@@ -130,9 +177,7 @@ export default function Page() {
       try {
         if (r === "ADMIN") {
           await Promise.all([
-            api
-              .get("/movimentacao")
-              .then((res) => setMovements(res.data || [])),
+            fetchAdminMovements(0),
             api.get("/empresas").then((res) =>
               setCompanies(
                 res.data.map((c: any) => ({
@@ -144,10 +189,7 @@ export default function Page() {
           ]);
         } else {
           await Promise.all([
-            api.get("/movimentacao/user").then((res) => {
-              setUserMovements(res.data || []);
-              console.log(res.data);
-            }),
+            fetchUserMovements(),
             api.get("/empresas/user").then((res) =>
               setCompanies(
                 (res.data || []).map((c: any) => ({
@@ -166,6 +208,18 @@ export default function Page() {
     }
     load();
   }, []);
+
+  async function handleAdminPageChange(p: number) {
+    setPage(p);
+    setIsLoading(true);
+    try {
+      await fetchAdminMovements(p);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   // ── Admin ───────────────────────────────────────────────────────────────────
   const adminStats = useMemo(
@@ -313,13 +367,9 @@ export default function Page() {
           onClick={() => setToggleNewMovement(false)}
           onSuccess={() => {
             if (role === "ADMIN") {
-              api
-                .get("/movimentacao")
-                .then((res) => setMovements(res.data || []));
+              fetchAdminMovements(page);
             } else {
-              api
-                .get("/movimentacao/user")
-                .then((res) => setUserMovements(res.data || []));
+              fetchUserMovements();
             }
           }}
         />
@@ -480,55 +530,57 @@ export default function Page() {
                 : "Não há movimentações realizadas"}
             </p>
           ) : (
-            <ul className="grid gap-2">
-              {filteredUser.map((m) => {
-                const st = statusMap[m.status?.toUpperCase()] ?? {
-                  label: m.status,
-                  className: "bg-gray-50 text-gray-700 border-gray-200",
-                };
-                const tipo = tipoMap[m.tipoMovimentacao?.toUpperCase()] ?? null;
-                const isConcluido = m.status?.toUpperCase() === "CONCLUIDO";
-                return (
-                  <li key={`${m.idMovimentacao}-${m.nomeBeneficiario}`}>
-                    <Link
-                      href={`/beneficiarios/${m.idBeneficiario}`}
-                      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-md border px-3 py-3 transition-all duration-100 inset-shadow-sm ${
-                        isConcluido
-                          ? "border-green-200 bg-green-50 hover:border-green-300 hover:bg-green-100"
-                          : "border-gray-200 bg-(--light-gray) hover:border-gray-300 hover:bg-gray-50"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        {tipo && (
-                          <div className={`shrink-0 ${tipo.className}`}>
-                            <tipo.Icon className="h-4 w-4" />
+            <div className="space-y-4">
+              <ul className="grid gap-2">
+                {filteredUser.map((m) => {
+                  const st = statusMap[m.status?.toUpperCase()] ?? {
+                    label: m.status,
+                    className: "bg-gray-50 text-gray-700 border-gray-200",
+                  };
+                  const tipo = tipoMap[m.tipoMovimentacao?.toUpperCase()] ?? null;
+                  const isConcluido = m.status?.toUpperCase() === "CONCLUIDO";
+                  return (
+                    <li key={`${m.idMovimentacao}-${m.nomeBeneficiario}`}>
+                      <Link
+                        href={`/beneficiarios/${m.idBeneficiario}`}
+                        className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-md border px-3 py-3 transition-all duration-100 inset-shadow-sm ${
+                          isConcluido
+                            ? "border-green-200 bg-green-50 hover:border-green-300 hover:bg-green-100"
+                            : "border-gray-200 bg-(--light-gray) hover:border-gray-300 hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {tipo && (
+                            <div className={`shrink-0 ${tipo.className}`}>
+                              <tipo.Icon className="h-4 w-4" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm truncate">
+                              {m.nomeBeneficiario}
+                            </p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {tipo?.label}
+                              {m.nomeEmpresa && <> &middot; {m.nomeEmpresa}</>}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {parseDate(m.dataMovimentacao)}
+                            </p>
                           </div>
-                        )}
-                        <div className="min-w-0">
-                          <p className="font-semibold text-sm truncate">
-                            {m.nomeBeneficiario}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {tipo?.label}
-                            {m.nomeEmpresa && <> &middot; {m.nomeEmpresa}</>}
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            {parseDate(m.dataMovimentacao)}
-                          </p>
                         </div>
-                      </div>
-                      <div className="flex flex-wrap gap-2 shrink-0">
-                        <span
-                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${st.className}`}
-                        >
-                          {st.label}
-                        </span>
-                      </div>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+                        <div className="flex flex-wrap gap-2 shrink-0">
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${st.className}`}
+                          >
+                            {st.label}
+                          </span>
+                        </div>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           )
         ) : filteredAdmin.length === 0 ? (
           <p className="text-center text-2xl italic opacity-60">
@@ -537,31 +589,26 @@ export default function Page() {
               : "Não há movimentações realizadas"}
           </p>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredAdmin.slice(0, 8).map((movement, i) => (
-              <MovementParentCard
-                key={i}
-                dataMovimentacao={movement.dataMovimentacao}
-                id={movement.idMovimentacao}
-                nomeEmpresa={movement.nomeEmpresa}
-                observacao={movement.observacao}
-                modalidade={movement.modalidade}
-                beneficiarios={movement.beneficiariosMovimentacao}
+          <div className="space-y-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredAdmin.map((movement, i) => (
+                <MovementParentCard
+                  key={i}
+                  dataMovimentacao={movement.dataMovimentacao}
+                  id={movement.idMovimentacao}
+                  nomeEmpresa={movement.nomeEmpresa}
+                  observacao={movement.observacao}
+                  modalidade={movement.modalidade}
+                  beneficiarios={movement.beneficiariosMovimentacao}
+                />
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                onChange={handleAdminPageChange}
               />
-            ))}
-            {filteredAdmin.length > 8 && (
-              <Link
-                href="/movements"
-                className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-300 bg-white text-gray-500 transition-all duration-200 hover:border-(--blue-icon) hover:text-(--azul) hover:shadow-md active:scale-95 min-h-40 p-6"
-              >
-                <ArrowRight className="h-8 w-8" />
-                <span className="text-base font-semibold">
-                  Ver todas as movimentações
-                </span>
-                <span className="text-sm opacity-70">
-                  {filteredAdmin.length - 8} restantes
-                </span>
-              </Link>
             )}
           </div>
         )}
