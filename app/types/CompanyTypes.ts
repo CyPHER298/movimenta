@@ -13,4 +13,6 @@ export type CompanyTypes = {
   qtdVidasAtivas: number;
   acessos: AcessoType[];
   nomeEquipeResponsavel: string;
+  idAnalista?: string;
+  idEquipe?: string;
 };

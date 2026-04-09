@@ -6,6 +6,7 @@ import { api } from "@/services/api";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
+  ArrowRightLeft,
   Building2,
   Clock,
   Files,
@@ -21,6 +22,7 @@ import { FaTooth } from "react-icons/fa";
 import Link from "next/link";
 import { FaUserPlus } from "react-icons/fa";
 import { VariacaoVidasType } from "@/app/types/VariacaoVidasType";
+import TransferirAnalistaModal from "@/app/components/TransferirAnalistaModal/TransferirAnalistaModal";
 
 export default function Page() {
   const params = useParams();
@@ -31,6 +33,7 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [dadosGraficos, setDadosGraficos] = useState<VariacaoVidasType[]>([]);
   const [reativando, setReativando] = useState<string | null>(null);
+  const [modalTransferir, setModalTransferir] = useState(false);
 
   async function reativarCadastro(idUsuario: string) {
     setReativando(idUsuario);
@@ -198,6 +201,7 @@ export default function Page() {
   }, [dadosGraficos, company?.qtdVidasAtivas]);
 
   return (
+    <>
     <div className="space-y-8 p-4 sm:p-6 lg:p-8">
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-md sm:p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -230,9 +234,21 @@ export default function Page() {
                 </p>
               </div>
               <div className="rounded-lg bg-(--light-gray) px-3 py-2">
-                <p className="text-xs uppercase tracking-wide text-gray-500">
-                  Equipe responsável
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">
+                    Equipe responsável
+                  </p>
+                  {company?.idAnalista && company?.idEquipe && (
+                    <button
+                      onClick={() => setModalTransferir(true)}
+                      className="flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium text-(--azul) hover:bg-blue-50 transition-colors cursor-pointer"
+                      title="Transferir analista para outra equipe"
+                    >
+                      <ArrowRightLeft className="h-3 w-3" />
+                      Transferir
+                    </button>
+                  )}
+                </div>
                 <p className="font-semibold wrap-break-word">
                   {company?.nomeEquipeResponsavel || "Não informado"}
                 </p>
@@ -449,5 +465,16 @@ export default function Page() {
         </div>
       </div>
     </div>
+
+    {modalTransferir && company?.idAnalista && company?.idEquipe && (
+      <TransferirAnalistaModal
+        idAnalista={company.idAnalista}
+        idEquipeAtual={company.idEquipe}
+        nomeAnalista={company.nomeEquipeResponsavel}
+        onClose={() => setModalTransferir(false)}
+        onSuccess={getCompanies}
+      />
+    )}
+    </>
   );
 }
