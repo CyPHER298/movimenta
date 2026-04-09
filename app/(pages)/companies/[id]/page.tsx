@@ -21,6 +21,8 @@ import { FaTooth } from "react-icons/fa";
 import Link from "next/link";
 import { FaUserPlus } from "react-icons/fa";
 import { VariacaoVidasType } from "@/app/types/VariacaoVidasType";
+import { MovementTypes } from "@/app/types/MovementTypes";
+import { MovementParentCard } from "@/app/components/MovementCard/MovementParentCard";
 
 export default function Page() {
   const params = useParams();
@@ -31,6 +33,7 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [dadosGraficos, setDadosGraficos] = useState<VariacaoVidasType[]>([]);
   const [reativando, setReativando] = useState<string | null>(null);
+  const [movements, setMovements] = useState<MovementTypes[]>([]);
 
   async function reativarCadastro(idUsuario: string) {
     setReativando(idUsuario);
@@ -78,6 +81,15 @@ export default function Page() {
     }
   }
 
+  async function getMovements() {
+    try {
+      const res = await api.get(`/movimentacao/empresa/${idEmpresa}`);
+      setMovements(res.data ?? []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   useEffect(() => {
     async function loadPageData() {
       try {
@@ -86,6 +98,7 @@ export default function Page() {
           getDadosGerais(),
           getCompanies(),
           getDadosGraficos(),
+          getMovements(),
         ]);
       } finally {
         setIsLoading(false);
@@ -265,6 +278,39 @@ export default function Page() {
             color={stat.color}
           />
         ))}
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-md p-4 sm:p-6 space-y-4">
+        <div>
+          <p className="text-2xl font-semibold tracking-wide">Movimentações</p>
+          <p className="text-sm text-gray-500">
+            {dadosGerais?.totalMovimentacao ?? 0} movimentação(ões) no total
+          </p>
+        </div>
+
+        {isLoading ? (
+          <p className="text-center text-xl italic opacity-60 py-8">
+            Carregando movimentações...
+          </p>
+        ) : movements.length === 0 ? (
+          <p className="text-center text-xl italic opacity-60 py-8">
+            Nenhuma movimentação encontrada para esta empresa.
+          </p>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {movements.map((movement) => (
+              <MovementParentCard
+                key={movement.idMovimentacao}
+                id={movement.idMovimentacao}
+                nomeEmpresa={movement.nomeEmpresa}
+                dataMovimentacao={movement.dataMovimentacao}
+                observacao={movement.observacao}
+                modalidade={movement.modalidade}
+                beneficiarios={movement.beneficiariosMovimentacao}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
