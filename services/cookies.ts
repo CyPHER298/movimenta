@@ -19,3 +19,4 @@ export async function deleteAuthCookie(name: string) {
   const cookieStore = await cookies();
   cookieStore.delete(name)
 }
+

@@ -5,18 +5,20 @@ export type BeneficiaryTypes = {
   endereco: Endereco;
   nomeTitular: string;
   dadosComplementares: Documentos;
-  plano: string;
+  planoAtual: string;
   dependencia: "TITULAR" | "CONJUGE" | "FILHO" | "AGREGADO";
-  tipo:
+  tipoMovimentacao:
     | "INCLUSAO"
     | "EXCLUSAO"
     | "ALTERACAO_DE_DADOS_CADASTRAIS"
     | "SEGUNDA_VIA_CARTEIRINHA";
+  status: "PENDENTE" | "ANALISE" | "ENVIADO_OPERADORA" | "PENDENTE_OPERADORA" | "DECLINIO" | "CONCLUIDO";
+  observacao: string
 };
 
 type Endereco = {
   logradouro: string;
-  numero: number;
+  numero: string;
   cep: string;
   bairro: string;
   cidade: string;

@@ -18,7 +18,6 @@ export default function Page() {
       const res = await api.get("/equipes");
       if (res.status === 200) {
         setTeams(res.data);
-        console.log(res.data);
       }
     } catch (err) {
       console.error(err);
@@ -54,7 +53,7 @@ export default function Page() {
           </div>
         </div>
       ) : (
-        <div className="flex justify-center items-center h-screen">
+        <div className="flex justify-center items-center h-full">
           <p className="font-bold italic text-(--cinza)">
             Nenhuma equipe encontrada
           </p>

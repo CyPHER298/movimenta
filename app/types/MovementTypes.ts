@@ -1,11 +1,11 @@
-import { BeneficiaryTypes } from "@/app/types/BeneficiaryTypes";
+import { BeneficiaryMovimentsTypes } from "./BeneficiaryMovimentsTypes";
 
 export type MovementTypes = {
-  id: string;
-  empresa: string;
-  beneficiario: BeneficiaryTypes;
-  data: string;
-  status: "pendente" | "em_analise" | "concluido";
-  descricao: string;
-  arquivos?: string[];
+  idMovimentacao: string;
+  nomeEmpresa: string;
+  beneficiariosMovimentacao: BeneficiaryMovimentsTypes[];
+  dataMovimentacao: string | number[];
+  observacao: string;
+  modalidade: string
 }
+

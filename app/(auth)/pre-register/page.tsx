@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { UserCog, TriangleAlert } from "lucide-react";
+import { Input } from "@/app/components/ui/Input/Input";
 
 type TeamStatus = "loading" | "valid" | "invalid";
 type SubmitStatus = "idle" | "success" | "error";
@@ -196,13 +197,11 @@ export default function PreRegister() {
                     <label htmlFor="nome-input" className="font-bold">
                       Nome:
                     </label>
-                    <input
+                    <Input
                       id="nome-input"
-                      name="nome-input"
                       type="text"
                       value={nome}
                       onChange={(e) => setNome(e.target.value)}
-                      className="border border-gray-300 rounded-lg p-2 bg-white transition-all duration-100 shadow-md focus:scale-105 focus:border-(--azul)"
                     />
                   </div>
 
@@ -210,11 +209,9 @@ export default function PreRegister() {
                     <label htmlFor="email-input" className="font-bold">
                       E-mail:
                     </label>
-                    <input
+                    <Input
                       id="email-input"
-                      name="email-input"
                       type="email"
-                      className="border border-gray-300 rounded-lg p-2 bg-white transition-all duration-100 shadow-md focus:scale-105 focus:border-(--azul)"
                     />
                   </div>
 
@@ -308,11 +305,9 @@ export default function PreRegister() {
               <label htmlFor="email-input" className="font-bold">
                 E-mail:
               </label>
-              <input
+              <Input
                 id="email-input"
-                name="email-input"
                 type="email"
-                className="border border-gray-300 rounded-lg p-2 bg-white transition-all duration-100 shadow-md focus:scale-105 focus:border-(--azul)"
               />
             </div>
             <div className="grid gap-2">
