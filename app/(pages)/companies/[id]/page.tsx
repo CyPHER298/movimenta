@@ -8,9 +8,12 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Building2,
   Clock,
+  CreditCard,
   Files,
   Layers,
   RefreshCw,
+  UserMinus,
+  UserPlus,
   Users,
 } from "lucide-react";
 import StatCard from "@/app/components/StatCard/StatCard";
@@ -21,8 +24,6 @@ import { FaTooth } from "react-icons/fa";
 import Link from "next/link";
 import { FaUserPlus } from "react-icons/fa";
 import { VariacaoVidasType } from "@/app/types/VariacaoVidasType";
-import { MovementTypes } from "@/app/types/MovementTypes";
-import { MovementParentCard } from "@/app/components/MovementCard/MovementParentCard";
 
 export default function Page() {
   const params = useParams();
@@ -33,7 +34,6 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(true);
   const [dadosGraficos, setDadosGraficos] = useState<VariacaoVidasType[]>([]);
   const [reativando, setReativando] = useState<string | null>(null);
-  const [movements, setMovements] = useState<MovementTypes[]>([]);
 
   async function reativarCadastro(idUsuario: string) {
     setReativando(idUsuario);
@@ -81,15 +81,6 @@ export default function Page() {
     }
   }
 
-  async function getMovements() {
-    try {
-      const res = await api.get(`/movimentacao/empresa/${idEmpresa}`);
-      setMovements(res.data ?? []);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
   useEffect(() => {
     async function loadPageData() {
       try {
@@ -98,7 +89,6 @@ export default function Page() {
           getDadosGerais(),
           getCompanies(),
           getDadosGraficos(),
-          getMovements(),
         ]);
       } finally {
         setIsLoading(false);
@@ -234,7 +224,7 @@ export default function Page() {
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-              <div className="rounded-lg bg-(--light-gray) px-3 py-2">
+              <div className="rounded-lg bg-(--light-gray) px-3 py-2 inset-shadow-sm/20">
                 <p className="text-xs uppercase tracking-wide text-gray-500">
                   Operadora
                 </p>
@@ -242,7 +232,7 @@ export default function Page() {
                   {company?.operadora || "Não informado"}
                 </p>
               </div>
-              <div className="rounded-lg bg-(--light-gray) px-3 py-2">
+              <div className="rounded-lg bg-(--light-gray) px-3 py-2 inset-shadow-sm/20">
                 <p className="text-xs uppercase tracking-wide text-gray-500">
                   Equipe responsável
                 </p>
@@ -253,7 +243,7 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-(--light-gray) px-4 py-3 min-w-52">
+          <div className="rounded-xl border border-gray-200 bg-linear-to-r from-(--light-gray) to-blue-50 px-4 py-3 min-w-52 inset-shadow-sm/20">
             <p className="text-xs uppercase tracking-wide text-gray-500">
               Vidas ativas
             </p>
@@ -278,39 +268,6 @@ export default function Page() {
             color={stat.color}
           />
         ))}
-      </div>
-
-      <div className="rounded-2xl border border-gray-200 bg-white shadow-md p-4 sm:p-6 space-y-4">
-        <div>
-          <p className="text-2xl font-semibold tracking-wide">Movimentações</p>
-          <p className="text-sm text-gray-500">
-            {dadosGerais?.totalMovimentacao ?? 0} movimentação(ões) no total
-          </p>
-        </div>
-
-        {isLoading ? (
-          <p className="text-center text-xl italic opacity-60 py-8">
-            Carregando movimentações...
-          </p>
-        ) : movements.length === 0 ? (
-          <p className="text-center text-xl italic opacity-60 py-8">
-            Nenhuma movimentação encontrada para esta empresa.
-          </p>
-        ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {movements.map((movement) => (
-              <MovementParentCard
-                key={movement.idMovimentacao}
-                id={movement.idMovimentacao}
-                nomeEmpresa={movement.nomeEmpresa}
-                dataMovimentacao={movement.dataMovimentacao}
-                observacao={movement.observacao}
-                modalidade={movement.modalidade}
-                beneficiarios={movement.beneficiariosMovimentacao}
-              />
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -390,7 +347,9 @@ export default function Page() {
                           {isExpired && (
                             <div className="relative group/tip">
                               <button
-                                onClick={() => reativarCadastro(acesso.idUsuario)}
+                                onClick={() =>
+                                  reativarCadastro(acesso.idUsuario)
+                                }
                                 disabled={isReativando}
                                 className="flex items-center justify-center rounded-full p-1 text-orange-500 hover:bg-orange-50 hover:text-orange-600 transition-colors duration-150 disabled:opacity-50 cursor-pointer"
                               >
@@ -493,6 +452,107 @@ export default function Page() {
             </div>
           )}
         </div>
+      </div>
+      <div className="rounded-2xl border border-gray-200 bg-white shadow-md p-4 sm:p-6 space-y-4">
+        <div>
+          <p className="text-2xl font-semibold tracking-wide">Movimentações</p>
+          <p className="text-sm text-gray-500">
+            {dadosGerais?.totalMovimentacao ?? 0} movimentação(ões) no total
+          </p>
+        </div>
+
+        {isLoading ? (
+          <p className="text-center text-xl italic opacity-60 py-8">
+            Carregando movimentações...
+          </p>
+        ) : !company?.movimentacoes?.length ? (
+          <p className="text-center text-xl italic opacity-60 py-8">
+            Nenhuma movimentação encontrada para esta empresa.
+          </p>
+        ) : (
+          <ul className="grid gap-2">
+            {company.movimentacoes.map((mov) => {
+              const tipoConfig: Record<
+                string,
+                { label: string; Icon: React.ElementType; cls: string }
+              > = {
+                INCLUSAO: {
+                  label: "Inclusão",
+                  Icon: UserPlus,
+                  cls: "bg-green-50 border-green-200 text-green-700",
+                },
+                EXCLUSAO: {
+                  label: "Exclusão",
+                  Icon: UserMinus,
+                  cls: "bg-red-50 border-red-200 text-red-700",
+                },
+                ALTERACAO_DE_DADOS_CADASTRAIS: {
+                  label: "Alteração",
+                  Icon: RefreshCw,
+                  cls: "bg-blue-50 border-blue-200 text-blue-700",
+                },
+                SEGUNDA_VIA_CARTEIRINHA: {
+                  label: "2ª Via",
+                  Icon: CreditCard,
+                  cls: "bg-purple-50 border-purple-200 text-purple-700",
+                },
+              };
+              const statusConfig: Record<string, string> = {
+                PENDENTE: "bg-orange-50 text-orange-700 border-orange-200",
+                ANALISE: "bg-blue-50 text-blue-700 border-blue-200",
+                ENVIADO_OPERADORA:
+                  "bg-indigo-50 text-indigo-700 border-indigo-200",
+                PENDENTE_OPERADORA:
+                  "bg-yellow-50 text-yellow-700 border-yellow-200",
+                DECLINIO: "bg-red-50 text-red-700 border-red-200",
+                CONCLUIDO: "bg-green-50 text-green-700 border-green-200",
+              };
+              const tipo = tipoConfig[mov.tipoMovimentacao?.toUpperCase()] ?? {
+                label: mov.tipoMovimentacao,
+                Icon: Files,
+                cls: "bg-gray-50 border-gray-200 text-gray-700",
+              };
+              const statusCls =
+                statusConfig[mov.status?.toUpperCase()] ??
+                "bg-gray-50 text-gray-700 border-gray-200";
+              const statusLabel: Record<string, string> = {
+                PENDENTE: "Pendente",
+                ANALISE: "Em Análise",
+                ENVIADO_OPERADORA: "Enviado",
+                PENDENTE_OPERADORA: "Pend. Operadora",
+                DECLINIO: "Declínio",
+                CONCLUIDO: "Concluído",
+              };
+              return (
+                <li key={mov.idBeneficiario}>
+                  <Link
+                    href={`/beneficiarios/${mov.idBeneficiario}`}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-md border border-gray-200 bg-(--light-gray) px-3 py-3 hover:border-gray-300 hover:bg-gray-50 transition-all duration-100"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`shrink-0 rounded-lg border p-2 ${tipo.cls}`}
+                      >
+                        <tipo.Icon className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-sm truncate">
+                          {mov.nome}
+                        </p>
+                        <p className="text-xs text-gray-500">{tipo.label}</p>
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold shrink-0 ${statusCls}`}
+                    >
+                      {statusLabel[mov.status?.toUpperCase()] ?? mov.status}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );

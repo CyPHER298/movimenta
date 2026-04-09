@@ -4,6 +4,18 @@ export type AcessoType = {
   status: string;
 };
 
+export type CompanyMovimentacaoType = {
+  idBeneficiario: string;
+  nome: string;
+  tipoMovimentacao: string;
+  descricao: string;
+  status: string;
+  dadosComplementares?: {
+    documentosEmpresa?: string[];
+    documentosBeneficiario?: string[];
+  };
+};
+
 export type CompanyTypes = {
   idEmpresa: string;
   nome: string;
@@ -13,4 +25,5 @@ export type CompanyTypes = {
   qtdVidasAtivas: number;
   acessos: AcessoType[];
   nomeEquipeResponsavel: string;
+  movimentacoes?: CompanyMovimentacaoType[];
 };
