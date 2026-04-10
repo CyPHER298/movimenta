@@ -1,5 +1,5 @@
 import { BeneficiaryMovimentsTypes } from "@/app/types/BeneficiaryMovimentsTypes";
-import { parseDate, resolveMovementStatus } from "@/app/utils/format";
+import { parseDateTime, resolveMovementStatus } from "@/app/utils/format";
 import {
   AlertCircle,
   CheckCircle2,
@@ -283,7 +283,7 @@ export const MovementParentCard = ({
               Data da movimentação
             </p>
             <p className="text-sm font-medium tabular-nums text-(--azul)">
-              {parseDate(dataMovimentacao)}
+              {parseDateTime(dataMovimentacao)}
             </p>
           </div>
         </div>

@@ -80,9 +80,15 @@ const statusOptions = [
     hover: "hover:bg-green-50 hover:border-green-300 hover:text-green-600",
   },
 ];
-import { formatCPF, parseDate, resolveMovementStatus } from "@/app/utils/format";
+import {
+  formatCPF,
+  parseDate,
+  parseDateTime,
+  resolveMovementStatus,
+} from "@/app/utils/format";
 import { GiHealthNormal } from "react-icons/gi";
 import { FaTooth } from "react-icons/fa";
+import Link from "next/link";
 
 const tipoLabel: Record<string, string> = {
   INCLUSAO: "Inclusão",
@@ -171,7 +177,9 @@ export default function Page() {
   const [feedbackPendente, setFeedbackPendente] = useState(false);
   const [declinioText, setDeclinioText] = useState<Record<string, string>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [detailsCache, setDetailsCache] = useState<Record<string, BeneficiarioDetail>>({});
+  const [detailsCache, setDetailsCache] = useState<
+    Record<string, BeneficiarioDetail>
+  >({});
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
 
   async function toggleExpand(idBeneficiario: string) {
@@ -255,7 +263,10 @@ export default function Page() {
   useEffect(() => {
     if (isLoading) return;
     const lista = movement?.beneficiariosMovimentacao ?? [];
-    if (lista.length > 0 && lista.every((b) => b.status?.toUpperCase() === "CONCLUIDO")) {
+    if (
+      lista.length > 0 &&
+      lista.every((b) => b.status?.toUpperCase() === "CONCLUIDO")
+    ) {
       setTodosConcluidosModal(true);
     }
   }, [movement, isLoading]);
@@ -386,7 +397,7 @@ export default function Page() {
                   Data
                 </p>
                 <p className="font-semibold">
-                  {movement ? parseDate(movement.dataMovimentacao) : "—"}
+                  {movement ? parseDateTime(movement.dataMovimentacao) : "—"}
                 </p>
               </div>
               {modalidade && (
@@ -414,10 +425,15 @@ export default function Page() {
             <div className="mt-3 flex items-center gap-2 flex-wrap border-t border-gray-200 pt-3">
               {stats.map((stat, i) => (
                 <div key={i} className="relative group">
-                  <div className="flex items-center justify-center rounded-lg p-1.5 bg-white border border-gray-200" style={{ color: stat.colorStyle }}>
+                  <div
+                    className="flex items-center justify-center rounded-lg p-1.5 bg-white border border-gray-200"
+                    style={{ color: stat.colorStyle }}
+                  >
                     <stat.icon className="h-4 w-4" />
                     {stat.value > 0 && (
-                      <span className="ml-1 text-xs font-semibold">{stat.value}</span>
+                      <span className="ml-1 text-xs font-semibold">
+                        {stat.value}
+                      </span>
                     )}
                   </div>
                   <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -433,7 +449,9 @@ export default function Page() {
 
       {movement?.observacao && (
         <div className="rounded-2xl border border-gray-200 bg-white shadow-md p-4 sm:p-6">
-          <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">Observação</p>
+          <p className="text-xs uppercase tracking-wide text-gray-500 mb-2">
+            Observação
+          </p>
           <p className="text-sm text-gray-700">{movement.observacao}</p>
         </div>
       )}
@@ -442,7 +460,9 @@ export default function Page() {
       <div className="rounded-2xl border border-gray-200 bg-white shadow-md p-4 sm:p-6 space-y-4">
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <p className="text-2xl font-semibold tracking-wide">Beneficiários</p>
+            <p className="text-2xl font-semibold tracking-wide">
+              Beneficiários
+            </p>
             <p className="text-sm text-gray-500">
               {beneficiarios.length} beneficiário(s) nesta movimentação
             </p>
@@ -476,7 +496,7 @@ export default function Page() {
               return (
                 <li
                   key={b.idBeneficiario}
-                  className="rounded-md border border-gray-200 bg-(--light-gray) px-3 py-3 inset-shadow-sm"
+                  className="rounded-md border border-gray-200 bg-(--light-gray) px-3 py-3 inset-shadow-sm/20 transition-colors"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -484,9 +504,12 @@ export default function Page() {
                         <div className={typeMov.className}>
                           <typeMov.Icon />
                         </div>
-                        <p className="font-semibold text-sm truncate">
+                        <Link
+                          href={`/beneficiarios/${b.idBeneficiario}`}
+                          className="font-semibold text-sm truncate hover:underline hover:text-(--azul)"
+                        >
                           {b.nome}
-                        </p>
+                        </Link>
                         <p className="text-xs text-gray-500">
                           {tipoLabel[b.tipoMovimentacao] ?? b.tipoMovimentacao}
                         </p>
@@ -494,7 +517,11 @@ export default function Page() {
                           type="button"
                           onClick={() => toggleExpand(b.idBeneficiario)}
                           className="flex items-center gap-1 text-xs text-gray-400 hover:text-(--azul) transition-colors cursor-pointer"
-                          title={expandedId === b.idBeneficiario ? "Ocultar dados" : "Ver dados do beneficiário"}
+                          title={
+                            expandedId === b.idBeneficiario
+                              ? "Ocultar dados"
+                              : "Ver dados do beneficiário"
+                          }
                         >
                           {loadingDetailId === b.idBeneficiario ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -516,7 +543,10 @@ export default function Page() {
                               type="button"
                               disabled={isUpdating}
                               onClick={() => {
-                                if (opt.value === "PENDENTE_OPERADORA" || opt.value === "DECLINIO") {
+                                if (
+                                  opt.value === "PENDENTE_OPERADORA" ||
+                                  opt.value === "DECLINIO"
+                                ) {
                                   setDeclinioText((prev) => ({
                                     ...prev,
                                     [b.idBeneficiario]:
@@ -558,54 +588,73 @@ export default function Page() {
                       </div>
                     </div>
 
-                    {expandedId === b.idBeneficiario && (() => {
-                      const d = detailsCache[b.idBeneficiario];
-                      if (loadingDetailId === b.idBeneficiario) {
+                    {expandedId === b.idBeneficiario &&
+                      (() => {
+                        const d = detailsCache[b.idBeneficiario];
+                        if (loadingDetailId === b.idBeneficiario) {
+                          return (
+                            <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Carregando dados...
+                            </div>
+                          );
+                        }
+                        if (!d) return null;
+                        const fields = [
+                          { label: "CPF", value: formatCPF(d.cpf) },
+                          {
+                            label: "Nascimento",
+                            value: parseDate(d.dataNascimento),
+                          },
+                          {
+                            label: "Dependência",
+                            value:
+                              dependenciaMap[d.dependencia] ?? d.dependencia,
+                          },
+                          d.dependencia !== "TITULAR" && d.nomeTitular
+                            ? { label: "Titular", value: d.nomeTitular }
+                            : null,
+                          d.planoAtual
+                            ? { label: "Plano Atual", value: d.planoAtual }
+                            : null,
+                          d.endereco?.logradouro
+                            ? {
+                                label: "Endereço",
+                                value: [
+                                  d.endereco.logradouro,
+                                  d.endereco.numero,
+                                  d.endereco.complemento,
+                                  d.endereco.bairro,
+                                  d.endereco.cidade,
+                                  d.endereco.estado,
+                                  d.endereco.cep,
+                                ]
+                                  .filter(Boolean)
+                                  .join(", "),
+                              }
+                            : null,
+                          d.observacao
+                            ? { label: "Observação", value: d.observacao }
+                            : null,
+                        ].filter(Boolean) as { label: string; value: string }[];
                         return (
-                          <div className="flex items-center gap-2 text-sm text-gray-400 py-2">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Carregando dados...
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 pt-1 border-t border-gray-300">
+                            {fields.map(({ label, value }) => (
+                              <div
+                                key={label}
+                                className="rounded-lg bg-white border border-gray-300 px-3 py-2 text-xs"
+                              >
+                                <p className="uppercase tracking-wide text-(--blue-icon) mb-0.5">
+                                  {label}
+                                </p>
+                                <p className="font-semibold text-gray-700 break-words">
+                                  {value}
+                                </p>
+                              </div>
+                            ))}
                           </div>
                         );
-                      }
-                      if (!d) return null;
-                      const fields = [
-                        { label: "CPF", value: formatCPF(d.cpf) },
-                        { label: "Nascimento", value: parseDate(d.dataNascimento) },
-                        { label: "Dependência", value: dependenciaMap[d.dependencia] ?? d.dependencia },
-                        d.dependencia !== "TITULAR" && d.nomeTitular
-                          ? { label: "Titular", value: d.nomeTitular }
-                          : null,
-                        d.planoAtual ? { label: "Plano Atual", value: d.planoAtual } : null,
-                        d.endereco?.logradouro
-                          ? {
-                              label: "Endereço",
-                              value: [
-                                d.endereco.logradouro,
-                                d.endereco.numero,
-                                d.endereco.complemento,
-                                d.endereco.bairro,
-                                d.endereco.cidade,
-                                d.endereco.estado,
-                                d.endereco.cep,
-                              ]
-                                .filter(Boolean)
-                                .join(", "),
-                            }
-                          : null,
-                        d.observacao ? { label: "Observação", value: d.observacao } : null,
-                      ].filter(Boolean) as { label: string; value: string }[];
-                      return (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 pt-1 border-t border-gray-200">
-                          {fields.map(({ label, value }) => (
-                            <div key={label} className="rounded-lg bg-white border border-gray-200 px-3 py-2 text-xs">
-                              <p className="uppercase tracking-wide text-gray-400 mb-0.5">{label}</p>
-                              <p className="font-semibold text-gray-700 break-words">{value}</p>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })()}
+                      })()}
 
                     {b.status?.toUpperCase() === "PENDENTE_OPERADORA" && (
                       <div className="flex gap-2 items-center">
@@ -627,7 +676,12 @@ export default function Page() {
                             !declinioText[b.idBeneficiario]?.trim() ||
                             sendingId === b.idBeneficiario
                           }
-                          onClick={() => handleConfirmarComEmail(b.idBeneficiario, "PENDENTE_OPERADORA")}
+                          onClick={() =>
+                            handleConfirmarComEmail(
+                              b.idBeneficiario,
+                              "PENDENTE_OPERADORA",
+                            )
+                          }
                           className="flex items-center gap-1.5 rounded-xl border border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-medium text-yellow-700 hover:bg-yellow-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
                           {sendingId === b.idBeneficiario ? (
@@ -658,7 +712,12 @@ export default function Page() {
                             !declinioText[b.idBeneficiario]?.trim() ||
                             sendingId === b.idBeneficiario
                           }
-                          onClick={() => handleConfirmarComEmail(b.idBeneficiario, "DECLINIO")}
+                          onClick={() =>
+                            handleConfirmarComEmail(
+                              b.idBeneficiario,
+                              "DECLINIO",
+                            )
+                          }
                           className="flex items-center gap-1.5 rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                         >
                           {sendingId === b.idBeneficiario ? (
@@ -686,7 +745,9 @@ export default function Page() {
             <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5 text-green-500" />
-                <h2 className="text-lg font-semibold">Movimentação concluída</h2>
+                <h2 className="text-lg font-semibold">
+                  Movimentação concluída
+                </h2>
               </div>
             </div>
 
@@ -695,7 +756,8 @@ export default function Page() {
                 Todos os beneficiários foram concluídos.
               </p>
               <p className="text-sm text-gray-600">
-                É importante enviar o feedback completo da movimentação ao cliente para informá-lo sobre a conclusão. Deseja enviar agora?
+                É importante enviar o feedback completo da movimentação ao
+                cliente para informá-lo sobre a conclusão. Deseja enviar agora?
               </p>
             </div>
 
@@ -747,7 +809,8 @@ export default function Page() {
                 <span className="font-semibold text-gray-900">
                   todos os beneficiários
                 </span>{" "}
-                desta movimentação será enviado por email ao cliente que fez a solicitação. Deseja continuar?
+                desta movimentação será enviado por email ao cliente que fez a
+                solicitação. Deseja continuar?
               </p>
             </div>
 

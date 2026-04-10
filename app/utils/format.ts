@@ -1,4 +1,4 @@
-export function parseDate(date: string | number[]): string {
+export function parseDateTime(date: string | number[]) {
   if (Array.isArray(date)) {
     const [year, month, day, hour, minute] = date;
     return new Date(year, month - 1, day, hour, minute).toLocaleString(
@@ -16,6 +16,12 @@ export function parseDate(date: string | number[]): string {
     timeStyle: "short",
   });
 }
+
+export const parseDate = (isoDate: string) => {
+    if (!isoDate) return "";
+    const [year, month, day] = isoDate.split("-");
+    return `${day}/${month}/${year}`;
+};
 
 export function resolveMovementStatus(
   beneficiarios: { status: string }[],

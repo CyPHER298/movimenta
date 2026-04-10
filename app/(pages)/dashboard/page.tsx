@@ -28,7 +28,7 @@ import { api } from "@/services/api";
 import NewMovementCard from "@/app/components/NewMovementCard/NewMovementCard";
 import { verifyConnected } from "@/app/utils/verifyConnected";
 import { MovementParentCard } from "@/app/components/MovementCard/MovementParentCard";
-import { parseDate, resolveMovementStatus } from "@/app/utils/format";
+import { parseDateTime, resolveMovementStatus } from "@/app/utils/format";
 import { getUserRole } from "@/services/auth";
 
 type SortOrder = "asc" | "desc" | "";
@@ -610,7 +610,7 @@ const [sortOrder, setSortOrder] = useState<SortOrder>("");
                               {m.nomeEmpresa && <> &middot; {m.nomeEmpresa}</>}
                             </p>
                             <p className="text-xs text-gray-400">
-                              {parseDate(m.dataMovimentacao)}
+                              {parseDateTime(m.dataMovimentacao)}
                             </p>
                           </div>
                         </div>
@@ -728,7 +728,7 @@ const [sortOrder, setSortOrder] = useState<SortOrder>("");
                                       )}
                                     </p>
                                     <p className="text-xs text-gray-400">
-                                      {parseDate(m.dataMovimentacao)}
+                                      {parseDateTime(m.dataMovimentacao)}
                                     </p>
                                   </div>
                                 </div>

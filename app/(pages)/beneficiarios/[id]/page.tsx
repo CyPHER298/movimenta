@@ -18,12 +18,18 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
-import { formatCPF, parseDate } from "@/app/utils/format";
+import { formatCPF, parseDateTime } from "@/app/utils/format";
 import { BeneficiaryTypes } from "@/app/types/BeneficiaryTypes";
 
 type BeneficiarioDetail = BeneficiaryTypes & {
   idBeneficiario: string;
   idMovimentacao: string;
+};
+
+type Documento = {
+  nome: string;
+  url: string;
+  tipo: string;
 };
 
 const statusMap: Record<string, { label: string; className: string }> = {
@@ -59,22 +65,26 @@ const tipoMap: Record<
 > = {
   INCLUSAO: {
     Icon: UserPlus,
-    className: "bg-green-50 text-(--green-icon) border rounded-lg border-green-200 p-2",
+    className:
+      "bg-green-50 text-(--green-icon) border rounded-lg border-green-200 p-2",
     label: "Inclusão",
   },
   EXCLUSAO: {
     Icon: UserMinus,
-    className: "text-(--red-icon) bg-red-50 border rounded-lg border-red-200 p-2",
+    className:
+      "text-(--red-icon) bg-red-50 border rounded-lg border-red-200 p-2",
     label: "Exclusão",
   },
   ALTERACAO_DE_DADOS_CADASTRAIS: {
     Icon: RefreshCw,
-    className: "text-(--blue-icon) bg-blue-50 border rounded-lg border-blue-200 p-2",
+    className:
+      "text-(--blue-icon) bg-blue-50 border rounded-lg border-blue-200 p-2",
     label: "Alteração Cadastral",
   },
   SEGUNDA_VIA_CARTEIRINHA: {
     Icon: CreditCard,
-    className: "text-purple-500 bg-purple-50 border rounded-lg border-purple-200 p-2",
+    className:
+      "text-purple-500 bg-purple-50 border rounded-lg border-purple-200 p-2",
     label: "2ª Via Carteirinha",
   },
 };
@@ -91,8 +101,22 @@ export default function Page() {
   const router = useRouter();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
 
-  const [beneficiario, setBeneficiario] = useState<BeneficiarioDetail | null>(null);
+  const [beneficiario, setBeneficiario] = useState<BeneficiarioDetail | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState(true);
+  const [documentos, setDocumentos] = useState<{
+    documentosEmpresa: Documento[];
+    documentosBeneficiario: Documento[];
+  }>({
+    documentosEmpresa: [],
+    documentosBeneficiario: [],
+  });
+  const [docModal, setDocModal] = useState<{
+    doc: Documento;
+    src: string;
+  } | null>(null);
+  const [docLoading, setDocLoading] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -100,6 +124,14 @@ export default function Page() {
         setIsLoading(true);
         const res = await api.get(`/movimentacao/beneficiario/${id}`);
         setBeneficiario(res.data);
+        const idBeneficiario = res.data.idBeneficiario;
+        if (idBeneficiario) {
+          const docsRes = await api.get(
+            `/movimentacao/documentos/${idBeneficiario}`,
+          );
+          console.log("DOCUMENTOS", docsRes.data);
+          setDocumentos(docsRes.data);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -108,6 +140,23 @@ export default function Page() {
     }
     load();
   }, [id]);
+
+  async function openDocumento(doc: Documento) {
+    setDocLoading(doc.url);
+    try {
+      const res = await api.get(`/movimentacao/documentos/stream`, {
+        params: { caminho: doc.url },
+        responseType: "blob",
+      });
+      const blob: Blob = res.data;
+      const src = URL.createObjectURL(blob);
+      setDocModal({ doc, src });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDocLoading(null);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -120,7 +169,9 @@ export default function Page() {
   if (!beneficiario) {
     return (
       <div className="flex items-center justify-center min-h-64 p-8">
-        <p className="text-lg italic opacity-60">Beneficiário não encontrado.</p>
+        <p className="text-lg italic opacity-60">
+          Beneficiário não encontrado.
+        </p>
       </div>
     );
   }
@@ -178,12 +229,16 @@ export default function Page() {
             </div>
 
             <p className="opacity-60 text-sm sm:text-base">
-              {tipoConfig.label} · {dependenciaMap[beneficiario.dependencia] ?? beneficiario.dependencia}
+              {tipoConfig.label} ·{" "}
+              {dependenciaMap[beneficiario.dependencia] ??
+                beneficiario.dependencia}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
               <div className="rounded-lg bg-(--light-gray) px-3 py-2 inset-shadow-sm/20 border border-gray-200">
-                <p className="text-xs uppercase tracking-wide text-gray-500">CPF</p>
+                <p className="text-xs uppercase tracking-wide text-gray-500">
+                  CPF
+                </p>
                 <p className="font-semibold">{formatCPF(beneficiario.cpf)}</p>
               </div>
               <div className="rounded-lg bg-(--light-gray) px-3 py-2 inset-shadow-sm/20 border border-gray-200">
@@ -191,17 +246,18 @@ export default function Page() {
                   Data de Nascimento
                 </p>
                 <p className="font-semibold">
-                  {parseDate(beneficiario.dataNascimento)}
+                  {parseDateTime(beneficiario.dataNascimento)}
                 </p>
               </div>
-              {beneficiario.dependencia !== "TITULAR" && beneficiario.nomeTitular && (
-                <div className="rounded-lg bg-(--light-gray) px-3 py-2 inset-shadow-sm/20 border border-gray-200">
-                  <p className="text-xs uppercase tracking-wide text-gray-500">
-                    Titular
-                  </p>
-                  <p className="font-semibold">{beneficiario.nomeTitular}</p>
-                </div>
-              )}
+              {beneficiario.dependencia !== "TITULAR" &&
+                beneficiario.nomeTitular && (
+                  <div className="rounded-lg bg-(--light-gray) px-3 py-2 inset-shadow-sm/20 border border-gray-200">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">
+                      Titular
+                    </p>
+                    <p className="font-semibold">{beneficiario.nomeTitular}</p>
+                  </div>
+                )}
             </div>
           </div>
 
@@ -210,7 +266,9 @@ export default function Page() {
               <p className="text-xs uppercase tracking-wide text-gray-500">
                 Plano Atual
               </p>
-              <p className="text-lg font-bold text-(--azul)">{beneficiario.planoAtual}</p>
+              <p className="text-lg font-bold text-(--azul)">
+                {beneficiario.planoAtual}
+              </p>
             </div>
           )}
         </div>
@@ -228,7 +286,10 @@ export default function Page() {
             {[
               { label: "Logradouro", value: beneficiario.endereco?.logradouro },
               { label: "Número", value: beneficiario.endereco?.numero },
-              { label: "Complemento", value: beneficiario.endereco?.complemento },
+              {
+                label: "Complemento",
+                value: beneficiario.endereco?.complemento,
+              },
               { label: "Bairro", value: beneficiario.endereco?.bairro },
               { label: "CEP", value: beneficiario.endereco?.cep },
               { label: "Cidade", value: beneficiario.endereco?.cidade },
@@ -236,7 +297,10 @@ export default function Page() {
             ].map(
               ({ label, value }) =>
                 value && (
-                  <div key={label} className="rounded-lg bg-(--light-gray) px-3 py-2 inset-shadow-sm/20 border border-gray-200">
+                  <div
+                    key={label}
+                    className="rounded-lg bg-(--light-gray) px-3 py-2 inset-shadow-sm/20 border border-gray-200"
+                  >
                     <p className="text-xs uppercase tracking-wide text-gray-500">
                       {label}
                     </p>
@@ -258,68 +322,108 @@ export default function Page() {
             <p className="text-xl font-semibold tracking-wide">Documentos</p>
           </div>
 
-          {beneficiario.dadosComplementares?.documentosBeneficiario?.length > 0 && (
+          {documentos.documentosBeneficiario.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-wide text-gray-500">
                 Documentos do Beneficiário
               </p>
               <ul className="space-y-1.5">
-                {beneficiario.dadosComplementares.documentosBeneficiario.map(
-                  (doc, i) => (
-                    <li
-                      key={i}
-                      className="flex items-center gap-2 rounded-lg border border-gray-200 bg-(--light-gray) px-3 py-2 text-sm"
+                {documentos.documentosBeneficiario.map((doc, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-(--light-gray) px-3 py-2 text-sm"
+                  >
+                    <FileText className="h-4 w-4 text-gray-400 shrink-0" />
+                    <button
+                      onClick={() => openDocumento(doc)}
+                      disabled={docLoading === doc.url}
+                      className="truncate text-(--azul) hover:underline text-left disabled:opacity-50 cursor-pointer"
                     >
-                      <FileText className="h-4 w-4 text-gray-400 shrink-0" />
-                      <a
-                        href={doc}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="truncate text-(--azul) hover:underline"
-                      >
-                        Documento {i + 1}
-                      </a>
-                    </li>
-                  ),
-                )}
+                      {docLoading === doc.url
+                        ? "Carregando..."
+                        : doc.nome || `Documento ${i + 1}`}
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           )}
 
-          {beneficiario.dadosComplementares?.documentosEmpresa?.length > 0 && (
+          {documentos.documentosEmpresa.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs uppercase tracking-wide text-gray-500">
                 Documentos da Empresa
               </p>
               <ul className="space-y-1.5">
-                {beneficiario.dadosComplementares.documentosEmpresa.map(
-                  (doc, i) => (
-                    <li
-                      key={i}
-                      className="flex items-center gap-2 rounded-lg border border-gray-200 bg-(--light-gray) px-3 py-2 text-sm"
+                {documentos.documentosEmpresa.map((doc, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-2 rounded-lg border border-gray-200 bg-(--light-gray) px-3 py-2 text-sm"
+                  >
+                    <FileText className="h-4 w-4 text-gray-400 shrink-0" />
+                    <button
+                      onClick={() => openDocumento(doc)}
+                      disabled={docLoading === doc.url}
+                      className="truncate text-(--azul) hover:underline text-left disabled:opacity-50 cursor-pointer"
                     >
-                      <FileText className="h-4 w-4 text-gray-400 shrink-0" />
-                      <a
-                        href={doc}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="truncate text-(--azul) hover:underline"
-                      >
-                        Documento {i + 1}
-                      </a>
-                    </li>
-                  ),
-                )}
+                      {docLoading === doc.url
+                        ? "Carregando..."
+                        : doc.nome || `Documento ${i + 1}`}
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           )}
 
-          {!beneficiario.dadosComplementares?.documentosBeneficiario?.length &&
-            !beneficiario.dadosComplementares?.documentosEmpresa?.length && (
-              <p className="text-sm italic opacity-60">Nenhum documento anexado.</p>
+          {!documentos.documentosBeneficiario.length &&
+            !documentos.documentosEmpresa.length && (
+              <p className="text-sm italic opacity-60">
+                Nenhum documento anexado.
+              </p>
             )}
         </div>
       </div>
+
+      {/* Modal de visualização de documento */}
+      {docModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => { URL.revokeObjectURL(docModal.src); setDocModal(null); }}
+        >
+          <div
+            className="relative bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+              <p className="font-semibold text-sm truncate">
+                {docModal.doc.nome}
+              </p>
+              <button
+                onClick={() => { URL.revokeObjectURL(docModal.src); setDocModal(null); }}
+                className="text-gray-400 hover:text-gray-700 transition-colors cursor-pointer"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4 flex items-center justify-center">
+              {/pdf/i.test(docModal.doc.tipo) ? (
+                <iframe
+                  src={docModal.src}
+                  className="w-full h-[70vh] rounded"
+                  title={docModal.doc.nome}
+                />
+              ) : (
+                <img
+                  src={docModal.src}
+                  alt={docModal.doc.nome}
+                  className="max-w-full max-h-[70vh] object-contain rounded"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Observação */}
       {beneficiario.observacao && (

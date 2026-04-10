@@ -351,15 +351,15 @@ export default function Page() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-2xl font-semibold tracking-wide">
-                Evolucao de vidas
+                Evolução de Vidas
               </p>
               <p className="text-sm text-gray-500">
                 A primeira coluna mostra o numero inicial de vidas da empresa.
               </p>
             </div>
-            <div className="text-sm rounded-lg border border-gray-200 bg-(--light-gray) px-3 py-2">
+            <div className="text-sm rounded-lg border border-gray-200 bg-(--light-gray) px-3 py-2 inset-shadow-sm/20">
               <p className="text-xs uppercase tracking-wide text-gray-500">
-                Ultimo valor
+                Ultimo Valor
               </p>
               <p className="font-semibold">
                 {barChartData.series[barChartData.series.length - 1]?.value}{" "}
@@ -374,7 +374,7 @@ export default function Page() {
             </p>
           ) : (
             <div className="space-y-3">
-              <div className="h-64 rounded-xl border border-gray-200 bg-(--light-gray) p-3 overflow-x-auto">
+              <div className="h-64 rounded-xl border border-gray-200 bg-(--light-gray) p-3 overflow-x-auto inset-shadow-sm/20">
                 <div className="h-full min-w-max flex items-end gap-3">
                   {barChartData.series.map((item, index) => {
                     const heightPercent =

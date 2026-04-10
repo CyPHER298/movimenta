@@ -30,6 +30,7 @@ export default function NewMovementCard({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [beneficiaryErrors, setBeneficiaryErrors] = useState<Record<number, Record<string, string>>>({});
 
   const addBenef = () => {
     const newBenef: BeneficiaryTypes = {
@@ -70,6 +71,9 @@ export default function NewMovementCard({
     const newBenef = [...beneficiaries];
     newBenef[index] = updatedData;
     setBeneficiaries(newBenef);
+    if (beneficiaryErrors[index]) {
+      setBeneficiaryErrors((prev) => { const next = { ...prev }; delete next[index]; return next; });
+    }
   };
 
   const updateBenefFiles = (
@@ -82,65 +86,39 @@ export default function NewMovementCard({
     setBeneficiaryFiles(updated);
   };
 
-  const validateBeneficiaries = (): string | null => {
+  const validateBeneficiaries = (): Record<number, Record<string, string>> | null => {
+    const allErrors: Record<number, Record<string, string>> = {};
+
     for (let i = 0; i < beneficiaries.length; i++) {
       const b = beneficiaries[i];
-      const label = `Beneficiário ${i + 1}`;
       const tipo = b.tipoMovimentacao;
+      const errs: Record<string, string> = {};
 
-      const req = (field: string, value: string) => {
-        if (!value?.trim()) return `${label}: campo "${field}" é obrigatório.`;
-        return null;
+      const req = (key: string, value: string, label: string) => {
+        if (!value?.trim()) errs[key] = `${label} é obrigatório.`;
       };
 
-      // Campos comuns a todos os tipos
-      const nome = req("Nome", b.nome);
-      if (nome) return nome;
+      req("nome", b.nome, "Nome");
+      req("cpf", b.cpf, "CPF");
 
-      const cpf = req("CPF", b.cpf);
-      if (cpf) return cpf;
-
-      // SEGUNDA_VIA: apenas nome + CPF
-      if (tipo === "SEGUNDA_VIA_CARTEIRINHA") continue;
-
-      // EXCLUSAO: nome + CPF (arquivo é opcional no front)
-      if (tipo === "EXCLUSAO") continue;
-
-      // ALTERACAO_CADASTRAL: apenas nome + CPF obrigatórios
-      if (tipo === "ALTERACAO_DE_DADOS_CADASTRAIS") continue;
-
-      // INCLUSAO: formulário completo
-      const dtNasc = req("Data de Nascimento", b.dataNascimento);
-      if (dtNasc) return dtNasc;
-
-      const cep = req("CEP", b.endereco.cep);
-      if (cep) return cep;
-
-      const estado = req("Estado", b.endereco.estado);
-      if (estado) return estado;
-
-      const cidade = req("Cidade", b.endereco.cidade);
-      if (cidade) return cidade;
-
-      const bairro = req("Bairro", b.endereco.bairro);
-      if (bairro) return bairro;
-
-      const logradouro = req("Logradouro", b.endereco.logradouro);
-      if (logradouro) return logradouro;
-
-      const numero = req("Número", b.endereco.numero);
-      if (numero) return numero;
-
-      const plano = req("Plano", b.planoAtual);
-      if (plano) return plano;
-
-      // Nome do titular só obrigatório para dependentes
-      if (b.dependencia !== "TITULAR") {
-        const titular = req("Nome do Titular", b.nomeTitular);
-        if (titular) return titular;
+      if (tipo === "INCLUSAO") {
+        req("dataNascimento", b.dataNascimento, "Data de Nascimento");
+        req("cep", b.endereco.cep, "CEP");
+        req("estado", b.endereco.estado, "Estado");
+        req("cidade", b.endereco.cidade, "Cidade");
+        req("bairro", b.endereco.bairro, "Bairro");
+        req("logradouro", b.endereco.logradouro, "Logradouro");
+        req("numero", b.endereco.numero, "Número");
+        req("planoAtual", b.planoAtual, "Plano");
+        if (b.dependencia !== "TITULAR") {
+          req("nomeTitular", b.nomeTitular, "Nome do Titular");
+        }
       }
+
+      if (Object.keys(errs).length > 0) allErrors[i] = errs;
     }
-    return null;
+
+    return Object.keys(allErrors).length > 0 ? allErrors : null;
   };
 
   const handleMovement = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -161,10 +139,13 @@ export default function NewMovementCard({
     }
     const validationError = validateBeneficiaries();
     if (validationError) {
-      setError(validationError);
+      setBeneficiaryErrors(validationError);
+      const count = Object.values(validationError).reduce((acc, e) => acc + Object.keys(e).length, 0);
+      setError(`Corrija ${count} campo(s) obrigatório(s) destacado(s) abaixo.`);
       document.getElementById("new-movement-scroll")?.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    setBeneficiaryErrors({});
 
     setIsLoading(true);
 
@@ -351,6 +332,7 @@ export default function NewMovementCard({
                     onPessoaisChange={(files) =>
                       updateBenefFiles(index, "pessoais", files)
                     }
+                    fieldErrors={beneficiaryErrors[index]}
                   />
                 </div>
               ))}

@@ -15,6 +15,7 @@ interface BeneficiaryProps {
   onVinculoChange?: (file: File | null) => void;
   onPessoaisChange?: (files: File[]) => void;
   idEmpresa?: string;
+  fieldErrors?: Record<string, string>;
 }
 
 const dependencies = [
@@ -43,7 +44,9 @@ export default function Beneficiary({
   onChange,
   onVinculoChange,
   onPessoaisChange,
+  fieldErrors = {},
 }: BeneficiaryProps) {
+  const fe = (key: string) => fieldErrors[key];
   const [vinculoName, setVinculoName] = useState<string | null>(null);
   const [pessoaisNames, setPessoaisNames] = useState<string[]>([]);
   const [isFetchingCep, setIsFetchingCep] = useState(false);
@@ -87,7 +90,7 @@ export default function Beneficiary({
   // ─── Shared field blocks ────────────────────────────────────────────────────
 
   const fieldNome = (
-    <div className="space-y-2 col-span-2">
+    <div className="space-y-1 col-span-2">
       <Label htmlFor={`nome-${data.cpf}`}>Nome Beneficiário</Label>
       <Input
         value={data.nome}
@@ -95,12 +98,14 @@ export default function Beneficiary({
         placeholder="Ex: Maria da Silva"
         type="text"
         id={`nome-${data.cpf}`}
+        error={!!fe("nome")}
       />
+      {fe("nome") && <p className="text-xs text-red-500">{fe("nome")}</p>}
     </div>
   );
 
   const fieldCpf = (
-    <div className="space-y-2">
+    <div className="space-y-1">
       <Label htmlFor={`cpf-${data.cpf}`}>CPF</Label>
       <Input
         value={formatCPF(data.cpf)}
@@ -108,12 +113,14 @@ export default function Beneficiary({
         placeholder="000.000.000-00"
         type="text"
         id={`cpf-${data.cpf}`}
+        error={!!fe("cpf")}
       />
+      {fe("cpf") && <p className="text-xs text-red-500">{fe("cpf")}</p>}
     </div>
   );
 
   const fieldObs = (
-    <div className="space-y-2 col-span-2">
+    <div className="space-y-1 col-span-2">
       <Label htmlFor={`obs-${data.cpf}`}>Observação</Label>
       <Input
         value={data.observacao}
@@ -176,16 +183,18 @@ export default function Beneficiary({
 
   const fullAddressAndDetails = (
     <>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label htmlFor={`dt-nasc-${data.cpf}`}>Data de Nascimento</Label>
         <Input
           value={data.dataNascimento}
           onChange={(e) => handleChange("dataNascimento", e.target.value)}
           type="date"
           id={`dt-nasc-${data.cpf}`}
+          error={!!fe("dataNascimento")}
         />
+        {fe("dataNascimento") && <p className="text-xs text-red-500">{fe("dataNascimento")}</p>}
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label htmlFor={`cep-${data.cpf}`}>CEP</Label>
         <div className="relative">
           <Input
@@ -194,13 +203,15 @@ export default function Beneficiary({
             placeholder="00000-000"
             type="text"
             id={`cep-${data.cpf}`}
+            error={!!fe("cep")}
           />
           {isFetchingCep && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400 pointer-events-none" />
           )}
         </div>
+        {fe("cep") && <p className="text-xs text-red-500">{fe("cep")}</p>}
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label htmlFor={`estado-${data.cpf}`}>Estado</Label>
         <Input
           value={data.endereco.estado}
@@ -208,9 +219,11 @@ export default function Beneficiary({
           placeholder="Ex: São Paulo"
           type="text"
           id={`estado-${data.cpf}`}
+          error={!!fe("estado")}
         />
+        {fe("estado") && <p className="text-xs text-red-500">{fe("estado")}</p>}
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label htmlFor={`cidade-${data.cpf}`}>Cidade</Label>
         <Input
           value={data.endereco.cidade}
@@ -218,9 +231,11 @@ export default function Beneficiary({
           placeholder="Ex: São Paulo"
           type="text"
           id={`cidade-${data.cpf}`}
+          error={!!fe("cidade")}
         />
+        {fe("cidade") && <p className="text-xs text-red-500">{fe("cidade")}</p>}
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label htmlFor={`bairro-${data.cpf}`}>Bairro</Label>
         <Input
           value={data.endereco.bairro}
@@ -228,9 +243,11 @@ export default function Beneficiary({
           placeholder="Ex: Jardins"
           type="text"
           id={`bairro-${data.cpf}`}
+          error={!!fe("bairro")}
         />
+        {fe("bairro") && <p className="text-xs text-red-500">{fe("bairro")}</p>}
       </div>
-      <div className="space-y-2 col-span-2">
+      <div className="space-y-1 col-span-2">
         <Label htmlFor={`logradouro-${data.cpf}`}>Logradouro</Label>
         <Input
           value={data.endereco.logradouro}
@@ -238,9 +255,11 @@ export default function Beneficiary({
           placeholder="Ex: Av. Paulista"
           type="text"
           id={`logradouro-${data.cpf}`}
+          error={!!fe("logradouro")}
         />
+        {fe("logradouro") && <p className="text-xs text-red-500">{fe("logradouro")}</p>}
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label htmlFor={`numero-${data.cpf}`}>Número</Label>
         <Input
           value={data.endereco.numero}
@@ -248,9 +267,11 @@ export default function Beneficiary({
           placeholder="Ex: 1439"
           type="text"
           id={`numero-${data.cpf}`}
+          error={!!fe("numero")}
         />
+        {fe("numero") && <p className="text-xs text-red-500">{fe("numero")}</p>}
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label htmlFor={`compl-${data.cpf}`}>Complemento</Label>
         <Input
           value={data.endereco.complemento}
@@ -260,7 +281,7 @@ export default function Beneficiary({
           id={`compl-${data.cpf}`}
         />
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label htmlFor={`dep-${data.cpf}`}>Dependência</Label>
         <CustomSelect
           id={`dep-${data.cpf}`}
@@ -270,7 +291,7 @@ export default function Beneficiary({
           value={data.dependencia}
         />
       </div>
-      <div className={`space-y-2 ${data.dependencia === "TITULAR" ? "hidden" : ""}`}>
+      <div className={`space-y-1 ${data.dependencia === "TITULAR" ? "hidden" : ""}`}>
         <Label htmlFor={`titular-${data.cpf}`}>Nome Titular</Label>
         <Input
           value={data.nomeTitular}
@@ -278,9 +299,11 @@ export default function Beneficiary({
           placeholder="Ex: Josué da Silva"
           type="text"
           id={`titular-${data.cpf}`}
+          error={!!fe("nomeTitular")}
         />
+        {fe("nomeTitular") && <p className="text-xs text-red-500">{fe("nomeTitular")}</p>}
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         <Label htmlFor={`plano-${data.cpf}`}>Plano</Label>
         <Input
           value={data.planoAtual}
@@ -288,7 +311,9 @@ export default function Beneficiary({
           placeholder="Ex: SMART 600 QP"
           type="text"
           id={`plano-${data.cpf}`}
+          error={!!fe("planoAtual")}
         />
+        {fe("planoAtual") && <p className="text-xs text-red-500">{fe("planoAtual")}</p>}
       </div>
       {fieldObs}
       {fieldDocPessoal}
