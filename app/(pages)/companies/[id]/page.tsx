@@ -463,7 +463,7 @@ export default function Page() {
                   Icon: RefreshCw,
                   cls: "bg-blue-50 border-blue-200 text-blue-700",
                 },
-                SEGUNDA_VIA_CARTEIRINHA: {
+                SEGUNDA_VIA_DE_CARTEIRINHA: {
                   label: "2ª Via",
                   Icon: CreditCard,
                   cls: "bg-purple-50 border-purple-200 text-purple-700",

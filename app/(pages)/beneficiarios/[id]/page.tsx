@@ -81,7 +81,7 @@ const tipoMap: Record<
       "text-(--blue-icon) bg-blue-50 border rounded-lg border-blue-200 p-2",
     label: "Alteração Cadastral",
   },
-  SEGUNDA_VIA_CARTEIRINHA: {
+  SEGUNDA_VIA_DE_CARTEIRINHA: {
     Icon: CreditCard,
     className:
       "text-purple-500 bg-purple-50 border rounded-lg border-purple-200 p-2",

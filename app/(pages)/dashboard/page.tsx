@@ -96,7 +96,7 @@ const tipoMap: Record<
     className:
       "text-(--blue-icon) bg-blue-50 border rounded-lg border-blue-200 p-2",
   },
-  SEGUNDA_VIA_CARTEIRINHA: {
+  SEGUNDA_VIA_DE_CARTEIRINHA: {
     label: "2ª Via",
     Icon: CreditCard,
     className:
@@ -146,7 +146,7 @@ export default function Page() {
   const [companies, setCompanies] = useState<
     { label: string; value: string }[]
   >([]);
-const [sortOrder, setSortOrder] = useState<SortOrder>("");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("");
   const [sortDate, setSortDate] = useState<SortOrder>("");
   const [filterStatus, setFilterStatus] = useState("");
   const [page, setPage] = useState(0);
@@ -186,7 +186,9 @@ const [sortOrder, setSortOrder] = useState<SortOrder>("");
             fetchAdminMovements(0),
             api.get("/empresas").then((res) => {
               const data: any[] = res.data ?? [];
-              setCompanies(data.map((c) => ({ label: c.nome, value: c.idEmpresa })));
+              setCompanies(
+                data.map((c) => ({ label: c.nome, value: c.idEmpresa })),
+              );
             }),
           ]);
         } else {
@@ -194,7 +196,9 @@ const [sortOrder, setSortOrder] = useState<SortOrder>("");
             fetchUserMovements(),
             api.get("/empresas/user").then((res) => {
               const data: any[] = res.data ?? [];
-              setCompanies(data.map((c) => ({ label: c.nome, value: c.idEmpresa })));
+              setCompanies(
+                data.map((c) => ({ label: c.nome, value: c.idEmpresa })),
+              );
             }),
           ]);
         }
@@ -572,7 +576,9 @@ const [sortOrder, setSortOrder] = useState<SortOrder>("");
             <p className="text-center text-2xl italic opacity-60">
               {hasFilters
                 ? "Nenhuma movimentação encontrada"
-                : "Não há movimentações realizadas"}
+                : userMovements.length === 0
+                  ? "Não há movimentações realizadas"
+                  : null}
             </p>
           ) : (
             <div className="space-y-4">
@@ -639,7 +645,9 @@ const [sortOrder, setSortOrder] = useState<SortOrder>("");
           <p className="text-center text-2xl italic opacity-60">
             {hasFilters
               ? "Nenhuma movimentação encontrada"
-              : "Não há movimentações realizadas"}
+              : movements.length === 0
+                ? "Não há movimentações realizadas"
+                : null}
           </p>
         ) : (
           <div className="space-y-4">
@@ -674,28 +682,26 @@ const [sortOrder, setSortOrder] = useState<SortOrder>("");
             const list = role === "USER" ? concludedUser : concludedAdmin;
             if (list.length === 0) return null;
             return (
-              <div className="rounded-2xl border border-green-200 bg-green-50 shadow-sm overflow-hidden">
+              <div className="">
                 <button
                   type="button"
                   onClick={() => setShowConcluidos((p) => !p)}
-                  className="w-full flex items-center justify-between gap-3 px-5 py-4 cursor-pointer hover:bg-green-100 transition-colors"
+                  className="w-full flex items-center justify-between gap-6 border-none transition cursor-pointer rounded-lg px-6 text-green-700"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-                    <span className="font-semibold text-green-800">
+                  <div className="w-full h-px bg-(--green-icon)"></div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-green-800">
                       Concluídos
-                    </span>
-                    <span className="inline-flex items-center rounded-full border border-green-200 bg-white px-2 py-0.5 text-xs font-semibold text-green-700">
-                      {list.length}
                     </span>
                   </div>
                   <ChevronDown
-                    className={`h-4 w-4 text-green-600 transition-transform duration-200 ${showConcluidos ? "rotate-180" : ""}`}
+                    className={`text-green-600 size-10 transition-transform duration-200 ${showConcluidos ? "rotate-180" : ""}`}
                   />
+                  <div className="w-full h-px bg-(--green-icon)"></div>
                 </button>
 
                 {showConcluidos && (
-                  <div className="border-t border-green-200 p-4 sm:p-5">
+                  <div className="p-4 sm:p-5">
                     {role === "USER" ? (
                       <ul className="grid gap-2">
                         {(list as typeof concludedUser).map((m) => {

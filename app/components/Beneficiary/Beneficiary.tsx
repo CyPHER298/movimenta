@@ -29,7 +29,7 @@ const movements = [
   { label: "Inclusão", value: "INCLUSAO" },
   { label: "Exclusão", value: "EXCLUSAO" },
   { label: "Alteração Cadastral", value: "ALTERACAO_DE_DADOS_CADASTRAIS" },
-  { label: "2ª Via da Carteirinha", value: "SEGUNDA_VIA_CARTEIRINHA" },
+  { label: "2ª Via da Carteirinha", value: "SEGUNDA_VIA_DE_CARTEIRINHA" },
 ];
 
 const fadeSlide = {
@@ -325,7 +325,7 @@ export default function Beneficiary({
 
   const renderSection = () => {
     // SEGUNDA_VIA: CPF + nome + obs
-    if (tipo === "SEGUNDA_VIA_CARTEIRINHA") {
+    if (tipo === "SEGUNDA_VIA_DE_CARTEIRINHA") {
       return (
         <motion.div key="segunda-via" {...fadeSlide} className="contents">
           {fieldNome}

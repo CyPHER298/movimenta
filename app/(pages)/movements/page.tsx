@@ -78,7 +78,7 @@ const tipoMap: Record<
     Icon: RefreshCw,
     iconClass: "text-orange-500",
   },
-  SEGUNDA_VIA_CARTEIRINHA: {
+  SEGUNDA_VIA_DE_CARTEIRINHA: {
     label: "2ª Via",
     Icon: CreditCard,
     iconClass: "text-purple-500",

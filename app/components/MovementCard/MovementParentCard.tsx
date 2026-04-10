@@ -78,7 +78,7 @@ const tipoMap: Record<string, TipoConfig> = {
     textClass: "text-orange-700",
     label: "Alteração",
   },
-  SEGUNDA_VIA_CARTEIRINHA: {
+  SEGUNDA_VIA_DE_CARTEIRINHA: {
     Icon: CreditCard,
     iconClass: "text-purple-500",
     textClass: "text-purple-700",
